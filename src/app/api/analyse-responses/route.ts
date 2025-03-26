@@ -140,8 +140,35 @@ export async function POST(request: NextRequest) {
                         FORMAT: Provide your response in clear paragraphs with the following sections:
                         1. Overall Assessment
                         2. Key Observations
-                        3. Personalized Recommendations
-                        4. Self-Care Suggestions
+                        3. Self-Care Suggestions
+
+                        The response should be maximum of 100 characters.
+
+                        {
+                             "overallAssessment": "The user appears to be struggling with feelings of sadness and hopelessness, but is motivated to seek help and improve their mental wellbeing.",
+                            "keyObservations": [
+                                "The user has expressed feelings of sadness and hopelessness.",
+                                "The user is motivated to seek help and improve their mental wellbeing."
+                            ],
+                            "selfCareSuggestions": [
+                                "Practice self-compassion and acknowledge that it is okay to feel sad or overwhelmed.",
+                                "Reach out to a trusted friend or family member for emotional support.",
+                                "Engage in activities that bring joy and relaxation, such as exercise, hobbies, or spending time in nature."
+                            ],
+                            "diagnosis": [
+                                {
+                                    "id": "string",
+                                    "name": "string",
+                                    "description": "string"
+                                },
+                                {
+                                    "id": "...",
+                                    "name": "...",
+                                    "description": "..."
+                                },...
+                            ]
+                        }
+                            you should follow the above format.
                         
                         USER RESPONSES:
                         ${formattedResponses}
