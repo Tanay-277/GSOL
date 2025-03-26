@@ -1,12 +1,12 @@
 <div align="center">
-  <h1>Progresso AI⚡</h1>
+  <h1>Mindwave</h1>
   <p><strong>A modern webapp to revolutionize workplace learning by tailoring experiences to individual needs along with personalized courses and AI generated flashcard quizzes.</strong></p>
-  <a href="https://progresso-ai.vercel.app/">Visit Progresso AI</a>
+  <a href="https://Mindwave-ai.vercel.app/">Visit Mindwave</a>
 </div>
 
 ## Overview
 
-Progresso AI is a fully responsive and comprehensive webapp designed to explore how AI can be leveraged to create learning environments that adapt dynamically to each user's progress, preferences, and goals. It has systems that offer personalized recommendations, track individual progress, and help organizations deliver impactful, learner-specific training.
+Mindwave AI is a fully responsive and comprehensive webapp designed to explore how AI can be leveraged to create learning environments that adapt dynamically to each user's progress, preferences, and goals. It has systems that offer personalized recommendations, track individual progress, and help organizations deliver impactful, learner-specific training.
 
 ## Key Features
 
