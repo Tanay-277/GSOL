@@ -115,6 +115,7 @@ export default function OnBoarding() {
     recommendations: string;
     selfCare: string[];
     disclaimer: string;
+    diagnosis?: string; // Added diagnosis property
   } | null>(null);
 
   const { toggleSidebar } = useSidebar();
@@ -367,11 +368,11 @@ export default function OnBoarding() {
               console.error("Missing key fields in response:", data);
               throw new Error("Response did not contain expected fields");
             }
-          
+          // @ts-ignore
             setProcessedAssessment({
-              overallAssessment: data.overallAssessment,
-              keyObservations: data.keyObservations.join("\n"),
-              selfCareSuggestions: data.selfCareSuggestions.join("\n"),
+              overall: data.overallAssessment,
+              observations: data.keyObservations.join("\n"),
+              selfCare: data.selfCareSuggestions,
               diagnosis: data.diagnosis
                 .map((d) => `${d.id} - ${d.name}: ${d.description}`)
                 .join("\n"),
