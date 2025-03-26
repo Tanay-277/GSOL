@@ -50,6 +50,14 @@ type AssessmentResult = {
   assessment: string;
 };
 
+interface ApiResponse {
+  overallAssessment: string;
+  keyObservations: string[];
+  selfCareSuggestions: string[];
+  diagnosis: { id: string; name: string; description: string }[];
+}
+
+
 // Mental health crisis resources
 const CRISIS_RESOURCES = [
   {
@@ -339,46 +347,41 @@ export default function OnBoarding() {
               body: JSON.stringify({ responses: finalResponses }),
               signal: controller.signal,
             });
-
+          
             clearTimeout(fetchTimeoutId);
-
+          
             if (response.status === 429) {
-              setError(
-                "You've made too many requests. Please wait a moment and try again.",
-              );
+              setError("You've made too many requests. Please wait a moment and try again.");
               throw new Error("Rate limit exceeded");
             }
-
+          
             if (!response.ok) {
               const errorData = await response.json().catch(() => ({}));
               console.error("Error response:", response.status, errorData);
-              throw new Error(
-                `Server error: ${response.status} - ${errorData.error || "Unknown error"}`,
-              );
+              throw new Error(`Server error: ${response.status} - ${errorData.error || "Unknown error"}`);
             }
-
-            const data = await response.json();
-
-            if (!data.assessment) {
-              console.error("Missing assessment in response:", data);
-              throw new Error("Response did not contain assessment data");
+          
+            const data = await response.json() as ApiResponse;
+          
+            if (!data.overallAssessment || !data.keyObservations || !data.selfCareSuggestions || !data.diagnosis) {
+              console.error("Missing key fields in response:", data);
+              throw new Error("Response did not contain expected fields");
             }
-
-            setAssessment(data.assessment);
-            setProcessedAssessment(processAssessment(data.assessment));
-            success = true;
-
-            // If we're using fallback assessment (indicated by source)
-            if (data.source === "fallback") {
-              console.log("Using fallback assessment");
-              setApiErrors((prev) => prev + 1);
-            }
+          
+            setProcessedAssessment({
+              overallAssessment: data.overallAssessment,
+              keyObservations: data.keyObservations.join("\n"),
+              selfCareSuggestions: data.selfCareSuggestions.join("\n"),
+              diagnosis: data.diagnosis
+                .map((d) => `${d.id} - ${d.name}: ${d.description}`)
+                .join("\n"),
+            });
 
             // Only store the completed assessment to history in localStorage
             const newAssessment: AssessmentResult = {
               date: new Date().toISOString(),
               responses: finalResponses,
-              assessment: data.assessment,
+              assessment: JSON.stringify(data),
             };
 
             try {
