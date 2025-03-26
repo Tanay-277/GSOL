@@ -67,7 +67,7 @@ function ErrorFallback({
   }, [error]);
 
   return (
-    <div className="flex h-screen flex-col items-center justify-center bg-background p-4">
+    <div className="flex flex-col items-center justify-center bg-background p-4">
       <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-md">
         <div className="flex flex-col items-center text-center">
           <AlertCircle className="mb-4 h-12 w-12 text-red-500" />
@@ -115,7 +115,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   // Wait for client-side mount to prevent hydration issues
   if (!isMounted) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
+      <div className="flex items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
       </div>
     );
@@ -126,7 +126,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       <QueryProvider>
         <SidebarProvider>
           <AppSidebar />
-          <SidebarInset className="flex h-screen flex-col">
+          <SidebarInset className="flex flex-col rounded-lg overflow-hidden">
             <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between gap-2 bg-background pr-4 shadow-sm">
               <div className="flex items-center gap-2 px-4">
                 <SidebarTrigger className="-ml-1" />
