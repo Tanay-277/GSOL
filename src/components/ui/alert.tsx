@@ -1,61 +1,59 @@
-import { cn } from "@/lib/utils";
-import {
-  CheckWaves,
-  DangerTriangle,
-  DangerWaves,
-  InfoWaves,
-} from "@mynaui/icons-react";
+import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
 
-type AlertType = "success" | "error" | "warning" | "info";
+import { cn } from "@/lib/utils"
 
-type AlertProps = {
-  title: string;
-  description?: string;
-  type?: AlertType;
-};
+const alertVariants = cva(
+  "relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground",
+  {
+    variants: {
+      variant: {
+        default: "bg-background text-foreground",
+        destructive:
+          "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
 
-const Alert = ({ title, description, type = "info" }: AlertProps) => {
-  const getAlertStyles = (type: AlertType) => {
-    switch (type) {
-      case "success":
-        return "bg-gradient-to-r from-emerald-800 to-transparent border-emerald-200 text-emerald-900";
-      case "error":
-        return "  bg-gradient-to-r from-red-500 to-transparent border-red-200 text-red-900";
-      case "warning":
-        return "  bg-gradient-to-r from-amber-50 to-transparent border-amber-200 text-amber-900";
-      case "info":
-        return "  bg-gradient-to-r from-blue-50 to-transparent border-blue-200 text-blue-900";
-    }
-  };
+const Alert = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
+>(({ className, variant, ...props }, ref) => (
+  <div
+    ref={ref}
+    role="alert"
+    className={cn(alertVariants({ variant }), className)}
+    {...props}
+  />
+))
+Alert.displayName = "Alert"
 
-  const getIcon = (type: AlertType) => {
-    switch (type) {
-      case "success":
-        return <CheckWaves className="h-5 w-5 text-emerald-500" />;
-      case "error":
-        return <DangerWaves className="h-5 w-5 text-red-500" />;
-      case "warning":
-        return <DangerTriangle className="h-5 w-5 text-amber-500" />;
-      case "info":
-        return <InfoWaves className="h-5 w-5 text-blue-500" />;
-    }
-  };
+const AlertTitle = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref) => (
+  <h5
+    ref={ref}
+    className={cn("mb-1 font-medium leading-none tracking-tight", className)}
+    {...props}
+  />
+))
+AlertTitle.displayName = "AlertTitle"
 
-  return (
-    <div
-      className={cn(
-        "flex items-start gap-4 rounded-lg border p-4 shadow-sm",
-        getAlertStyles(type),
-      )}
-      role="alert"
-    >
-      <div className="flex-shrink-0 pt-0.5">{getIcon(type)}</div>
-      <div className="flex-1 space-y-1">
-        <h3 className="text-sm font-semibold">{title}</h3>
-        {description && <p className="text-sm opacity-80">{description}</p>}
-      </div>
-    </div>
-  );
-};
+const AlertDescription = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("text-sm [&_p]:leading-relaxed", className)}
+    {...props}
+  />
+))
+AlertDescription.displayName = "AlertDescription"
 
-export default Alert;
+export { Alert, AlertTitle, AlertDescription }

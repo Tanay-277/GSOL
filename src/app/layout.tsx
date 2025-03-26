@@ -28,7 +28,7 @@ export default async function RootLayout({
         <ClientProvider session={session}>
           <ThemeProvider
             attribute="class"
-            defaultTheme="light"
+            defaultTheme="dark"
             enableSystem
             disableTransitionOnChange
           >

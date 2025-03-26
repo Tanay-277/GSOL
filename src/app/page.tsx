@@ -147,15 +147,7 @@ export default function Hero() {
         <div className="relative mt-20 rounded-[32px] border border-border bg-muted/50 p-2">
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 w-full scale-[1.1]" />
           <div className="rounded-[24px] border border-border bg-background p-2">
-            <Image
-              alt="header"
-              loading="lazy"
-              width={1920}
-              height={1080}
-              decoding="async"
-              className="rounded-[20px]"
-              src="https://res.cloudinary.com/sutharjay/image/upload/v1736580152/hssx9lbus911vzdq0izj.png"
-            />
+           
           </div>
         </div>
       </div>
