@@ -324,10 +324,8 @@ export default function AssessmentHistory() {
                         
                         <div className="space-y-2">
                             {assessments.map((assessment, index) => (
-                                <motion.button
+                                <button
                                     key={assessment.date}
-                                    whileHover={{ scale: 1.01 }}
-                                    whileTap={{ scale: 0.99 }}
                                     className={cn(
                                         "w-full rounded-md border p-3 text-left transition-colors relative",
                                         selectedAssessment?.date === assessment.date 
@@ -367,7 +365,7 @@ export default function AssessmentHistory() {
                                             </span>
                                         </div>
                                     )}
-                                </motion.button>
+                                </button>
                             ))}
                         </div>
                     </div>

@@ -120,61 +120,48 @@ export async function POST(request: NextRequest) {
             .map((r: UserResponse) => `Question: ${r.question}\nAnswer: ${r.answer}`)
             .join("\n\n");
 
-        // Create a prompt for mental health analysis with clear boundaries
+        // Create a prompt for mental health analysis with clear boundaries and structured JSON output
         const prompt = `
-                        You are a professional mental health expert providing a supportive assessment. 
-                        Analyze the following responses to a mental health questionnaire.
-                        
-                        Based on these responses, provide a comprehensive but concise professional assessment of the individual's 
-                        current mental state, potential concerns, and personalized recommendations for improving mental wellbeing.
-                        
-                        Important guidelines:
-                        1. DO NOT provide a clinical diagnosis or suggest specific psychiatric conditions
-                        2. Maintain a compassionate, non-judgmental tone
-                        3. Do not suggest medication or specific treatment plans
-                        4. Focus on general wellbeing and self-care strategies
-                        5. Always emphasize the importance of professional help when appropriate
-                        6. Use evidence-based approaches when making suggestions
-                        7. Include a clear disclaimer about the limitations of an automated assessment
-                        
-                        FORMAT: Provide your response in clear paragraphs with the following sections:
-                        1. Overall Assessment
-                        2. Key Observations
-                        3. Self-Care Suggestions
-
-                        The response should be maximum of 100 characters.
-
-                        {
-                             "overallAssessment": "The user appears to be struggling with feelings of sadness and hopelessness, but is motivated to seek help and improve their mental wellbeing.",
-                            "keyObservations": [
-                                "The user has expressed feelings of sadness and hopelessness.",
-                                "The user is motivated to seek help and improve their mental wellbeing."
-                            ],
-                            "selfCareSuggestions": [
-                                "Practice self-compassion and acknowledge that it is okay to feel sad or overwhelmed.",
-                                "Reach out to a trusted friend or family member for emotional support.",
-                                "Engage in activities that bring joy and relaxation, such as exercise, hobbies, or spending time in nature."
-                            ],
-                            "diagnosis": [
-                                {
-                                    "id": "string",
-                                    "name": "string",
-                                    "description": "string"
-                                },
-                                {
-                                    "id": "...",
-                                    "name": "...",
-                                    "description": "..."
-                                },...
-                            ]
-                        }
-                            you should follow the above format.
-                        
-                        USER RESPONSES:
-                        ${formattedResponses}
-                        
-                        Important: End with a clear disclaimer that this is not a clinical diagnosis and encourage seeking professional help if experiencing significant distress.
-                `;
+            You are a professional mental health expert providing a supportive assessment. 
+            Analyze the following responses to a mental health questionnaire.
+            
+            Based on these responses, provide a comprehensive but concise professional assessment of the individual's 
+            current mental state, potential concerns, and personalized recommendations for improving mental wellbeing.
+            
+            Important guidelines:
+            1. DO NOT provide a clinical diagnosis or suggest specific psychiatric conditions
+            2. Maintain a compassionate, non-judgmental tone
+            3. Do not suggest medication or specific treatment plans
+            4. Focus on general wellbeing and self-care strategies
+            5. Always emphasize the importance of professional help when appropriate
+            6. Use evidence-based approaches when making suggestions
+            7. Include a clear disclaimer about the limitations of an automated assessment
+            
+            IMPORTANT: You must respond with a valid JSON object in exactly this format:
+            
+            {
+                "overallAssessment": "A concise paragraph summarizing the person's mental wellbeing",
+                "keyObservations": ["observation 1", "observation 2", "observation 3"],
+                "selfCareSuggestions": ["suggestion 1", "suggestion 2", "suggestion 3", "suggestion 4", "suggestion 5"],
+                "diagnosis": [
+                    {
+                        "id": "note-1",
+                        "name": "Important Note",
+                        "description": "This is not a clinical diagnosis"
+                    },
+                    {
+                        "id": "note-2",
+                        "name": "Recommendation",
+                        "description": "Consider professional support if experiencing significant distress"
+                    }
+                ]
+            }
+            
+            USER RESPONSES:
+            ${formattedResponses}
+            
+            Remember: Return ONLY a valid JSON object with no additional text.
+        `;
 
         // Add timeout for model generation
         const timeoutPromise = new Promise((_, reject) => {
@@ -188,9 +175,9 @@ export async function POST(request: NextRequest) {
 
             // @ts-ignore - result is the content generation result if the race was won by contentPromise
             const response = await result.response;
-            const assessment = response.text();
-
-            if (!assessment || assessment.trim().length < 100) {
+            const assessmentText = response.text();
+            
+            if (!assessmentText || assessmentText.trim().length < 50) {
                 console.error("Empty or too short assessment returned");
                 return NextResponse.json(
                     { error: "Failed to generate a valid assessment" },
@@ -198,23 +185,80 @@ export async function POST(request: NextRequest) {
                 );
             }
 
-            // Final safety check - ensure assessment contains appropriate disclaimer
-            const finalAssessment = assessment.includes("not a clinical diagnosis")
-                ? assessment
-                : `${assessment}\n\nNOTE: This assessment is not a clinical diagnosis and should not replace professional mental health advice. If you're experiencing significant distress, please consult with a qualified mental health professional.`;
-
-            console.log("Successfully generated assessment");
-
-            // Return the generated assessment with cache control headers
-            return NextResponse.json(
-                { assessment: finalAssessment, source: "ai-generated" },
-                {
+            // Try to parse the response as JSON
+            try {
+                // Extract JSON from the response (in case there's surrounding text)
+                const jsonMatch = assessmentText.match(/\{[\s\S]*\}/);
+                const jsonString = jsonMatch ? jsonMatch[0] : assessmentText;
+                const assessment = JSON.parse(jsonString);
+                
+                // Validate that the parsed JSON has all required fields
+                if (!assessment.overallAssessment || 
+                    !Array.isArray(assessment.keyObservations) || 
+                    !Array.isArray(assessment.selfCareSuggestions) ||
+                    !Array.isArray(assessment.diagnosis)) {
+                    
+                    // If missing fields, create a properly structured fallback response
+                    const fallbackAssessment = {
+                        overallAssessment: extractSection(assessmentText, "Overall Assessment") || 
+                            "Based on your responses, we've identified some aspects of your mental wellbeing to consider.",
+                        keyObservations: extractBulletPoints(extractSection(assessmentText, "Key Observations")) || 
+                            ["Consider speaking with a mental health professional for a proper evaluation."],
+                        selfCareSuggestions: extractBulletPoints(extractSection(assessmentText, "Self-Care Suggestions")) || 
+                            ["Practice regular self-care activities", "Maintain connections with supportive people", "Get adequate sleep and exercise", "Consider mindfulness practices", "Seek professional support if needed"],
+                        diagnosis: [
+                            {
+                                id: "disclaimer",
+                                name: "Important Note",
+                                description: "This is not a clinical diagnosis and should not replace professional mental health advice."
+                            }
+                        ]
+                    };
+                    
+                    console.log("Successfully created fallback structured assessment");
+                    return NextResponse.json(fallbackAssessment, {
+                        status: 200,
+                        headers: {
+                            "Cache-Control": "private, no-cache, no-store, must-revalidate",
+                        },
+                    });
+                }
+                
+                console.log("Successfully generated structured assessment");
+                return NextResponse.json(assessment, {
                     status: 200,
                     headers: {
                         "Cache-Control": "private, no-cache, no-store, must-revalidate",
                     },
-                },
-            );
+                });
+                
+            } catch (jsonError) {
+                console.error("Error parsing JSON from model response:", jsonError);
+                
+                // Create a structured response from the text-based assessment
+                const structuredAssessment = {
+                    overallAssessment: extractSection(assessmentText, "Overall Assessment") || assessmentText.substring(0, 200),
+                    keyObservations: extractBulletPoints(extractSection(assessmentText, "Key Observations")) || 
+                        ["Based on your responses, we recommend speaking with a mental health professional for a proper evaluation."],
+                    selfCareSuggestions: extractBulletPoints(extractSection(assessmentText, "Self-Care Suggestions")) || 
+                        ["Practice regular self-care activities", "Maintain connections with supportive people", "Get adequate rest", "Consider mindfulness practices", "Seek professional support if needed"],
+                    diagnosis: [
+                        {
+                            id: "disclaimer",
+                            name: "Important Note",
+                            description: "This is not a clinical diagnosis and should not replace professional mental health advice."
+                        }
+                    ]
+                };
+                
+                console.log("Created structured assessment from text response");
+                return NextResponse.json(structuredAssessment, {
+                    status: 200,
+                    headers: {
+                        "Cache-Control": "private, no-cache, no-store, must-revalidate",
+                    },
+                });
+            }
         } catch (generationError) {
             console.error("Error during content generation:", generationError);
             return NextResponse.json(
@@ -232,4 +276,33 @@ export async function POST(request: NextRequest) {
             { status: 500 },
         );
     }
+}
+
+// Helper function to extract a section from the assessment text
+function extractSection(text: string, sectionName: string): string | null {
+    const regex = new RegExp(`(?:\\*\\*)?${sectionName}(?:\\*\\*)?[:\\s]+(.*?)(?=(?:\\*\\*\\w|$|\\n\\s*\\n|\\n\\s*\\*\\*))`, 'is');
+    const match = text.match(regex);
+    return match ? match[1].trim() : null;
+}
+
+// Helper function to extract bullet points from a section
+function extractBulletPoints(text: string | null): string[] | null {
+    if (!text) return null;
+    
+    // Try to find bullet points (marked by -, *, •, or numbers)
+    const bulletPointRegex = /(?:^|\n)\s*(?:[-•*]|\d+\.)\s*(.*?)(?=(?:\n\s*(?:[-•*]|\d+\.)|$))/g;
+    const matches = [...text.matchAll(bulletPointRegex)];
+    
+    if (matches.length > 0) {
+        return matches.map(match => match[1].trim());
+    }
+    
+    // If no bullet points found, split by newlines
+    const lines = text.split(/\n/).map(line => line.trim()).filter(line => line);
+    if (lines.length > 0) {
+        return lines;
+    }
+    
+    // If no clear structure, return the text as a single point
+    return [text.trim()];
 }
