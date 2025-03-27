@@ -368,11 +368,12 @@ export default function OnBoarding() {
               console.error("Missing key fields in response:", data);
               throw new Error("Response did not contain expected fields");
             }
-          // @ts-ignore
             setProcessedAssessment({
               overall: data.overallAssessment,
               observations: data.keyObservations.join("\n"),
+              recommendations: "", // Add empty recommendations
               selfCare: data.selfCareSuggestions,
+              disclaimer: "This assessment is not a clinical diagnosis and should not replace professional mental health advice.",
               diagnosis: data.diagnosis
                 .map((d) => `${d.id} - ${d.name}: ${d.description}`)
                 .join("\n"),
@@ -816,65 +817,75 @@ export default function OnBoarding() {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-
+              
               {processedAssessment ? (
-                <div className="mb-10">
-                  {/* Overall Assessment */}
-                  <div className="mb-8 rounded-lg bg-card p-6 text-left shadow-sm ring-1 ring-muted/20">
-                    <div className="mb-3 flex items-center gap-2">
-                      <Heart className="h-5 w-5 text-rose-500" />
-                      <h3 className="font-semibold text-lg">Overall Assessment</h3>
-                    </div>
-                    <p className="text-muted-foreground">
-                      {processedAssessment.overall}
-                    </p>
-                  </div>
-
-                  {/* Key Observations */}
-                  {processedAssessment.observations && (
-                    <div className="mb-8 rounded-lg bg-card p-6 text-left shadow-sm ring-1 ring-muted/20">
-                      <div className="mb-3 flex items-center gap-2">
-                        <BookOpen className="h-5 w-5 text-blue-500" />
-                        <h3 className="font-semibold text-lg">Key Observations</h3>
+                <div className="mb-10 space-y-6">
+                    {/* Overall Assessment */}
+                    <div className="rounded-xl border border-muted bg-card p-6 text-left shadow-sm transition-all hover:shadow-md">
+                      <div className="mb-4 flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-900/30">
+                          <Heart className="h-5 w-5 text-rose-500" />
+                        </div>
+                        <h3 className="text-xl font-medium">Overall Assessment</h3>
                       </div>
-                      <p className="text-muted-foreground">
-                        {processedAssessment.observations}
+                      <p className="text-lg leading-relaxed text-muted-foreground">
+                        {processedAssessment.overall}
                       </p>
                     </div>
-                  )}
 
-                  {/* Personalized Recommendations */}
-                  {processedAssessment.recommendations && (
-                    <div className="mb-8 rounded-lg bg-card p-6 text-left shadow-sm ring-1 ring-muted/20">
-                      <div className="mb-3 flex items-center gap-2">
-                        <ListChecks className="h-5 w-5 text-green-500" />
-                        <h3 className="font-semibold text-lg">Personalized Recommendations</h3>
+                    {/* Key Observations */}
+                    {processedAssessment.observations && (
+                      <div className="rounded-xl border border-muted bg-card p-6 text-left shadow-sm transition-all hover:shadow-md">
+                        <div className="mb-4 flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+                            <BookOpen className="h-5 w-5 text-blue-500" />
+                          </div>
+                          <h3 className="text-xl font-medium">Key Observations</h3>
+                        </div>
+                        <p className="text-lg leading-relaxed text-muted-foreground">
+                          {processedAssessment.observations}
+                        </p>
                       </div>
-                      <p className="text-muted-foreground">
-                        {processedAssessment.recommendations}
-                      </p>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Self-Care Suggestions */}
-                  {processedAssessment.selfCare && processedAssessment.selfCare.length > 0 && (
-                    <div className="mb-8 rounded-lg bg-card p-6 text-left shadow-sm ring-1 ring-muted/20">
-                      <div className="mb-3 flex items-center gap-2">
-                        <ListTodo className="h-5 w-5 text-amber-500" />
-                        <h3 className="font-semibold text-lg">Self-Care Suggestions</h3>
+                    {/* Personalized Recommendations */}
+                    {processedAssessment.recommendations && (
+                      <div className="rounded-xl border border-muted bg-card p-6 text-left shadow-sm transition-all hover:shadow-md">
+                        <div className="mb-4 flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+                            <ListChecks className="h-5 w-5 text-green-500" />
+                          </div>
+                          <h3 className="text-xl font-medium">Recommendations</h3>
+                        </div>
+                        <p className="text-lg leading-relaxed text-muted-foreground">
+                          {processedAssessment.recommendations}
+                        </p>
                       </div>
-                      <ul className="ml-2 space-y-2">
-                        {processedAssessment.selfCare.map((item, idx) => (
-                          <li key={idx} className="flex items-start gap-2 text-muted-foreground">
-                            <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary flex-shrink-0"></div>
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Disclaimer */}
+                    {/* Self-Care Suggestions */}
+                    {processedAssessment.selfCare && processedAssessment.selfCare.length > 0 && (
+                      <div className="rounded-xl border border-muted bg-card p-6 text-left shadow-sm transition-all hover:shadow-md">
+                        <div className="mb-4 flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+                            <ListTodo className="h-5 w-5 text-amber-500" />
+                          </div>
+                          <h3 className="text-xl font-medium">Self-Care Ideas</h3>
+                        </div>
+                        <ul className="ml-2 space-y-4">
+                          {processedAssessment.selfCare.map((item, idx) => (
+                            <li key={idx} className="flex items-start gap-3 text-lg text-muted-foreground">
+                              <div className="mt-2 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
+                                <Check className="h-3.5 w-3.5 text-primary" />
+                              </div>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Disclaimer */}
                   {processedAssessment.disclaimer && (
                     <div className="rounded-lg bg-blue-50 p-4 text-left dark:bg-blue-900/20">
                       <div className="flex items-start">
