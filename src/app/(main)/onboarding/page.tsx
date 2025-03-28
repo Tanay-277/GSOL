@@ -444,6 +444,20 @@ export default function OnBoarding() {
     }
   };
 
+const course = async () => {
+  const controller = new AbortController();
+  const fetchTimeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds timeout for fetch
+
+  const response = await fetch("/api/generate-course", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ responses: finalcourse }),
+    signal: controller.signal,
+  });
+}
+  
   const restartAssessment = () => {
     setStarted(true);
     setCurrentQuestion(0);

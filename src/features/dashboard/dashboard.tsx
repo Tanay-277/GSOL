@@ -23,6 +23,8 @@ import {
 } from "recharts";
 import { DashboardData } from "./actions/get-dashboard-data";
 import Link from "next/link";
+import { useEffect } from "react";
+import { log } from "console";
 
 const COLORS = [
   "hsl(var(--primary))",
@@ -31,6 +33,31 @@ const COLORS = [
 ];
 
 export function DashboardClient({ data }: { data: DashboardData }) {
+
+  useEffect(() => {
+
+    const assessments = JSON.parse(
+      localStorage.getItem("mentalHealthAssessments") || "[]",
+    );
+    const lastassessment = Array.isArray(assessments)
+      ? assessments.pop()
+      : "No previous assessment found";
+
+      console.log(lastassessment);
+
+    const fetchData = async () => {
+      const response = await fetch("/api/generate-course", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: lastassessment
+      });
+      const responseData = await response.json();
+      console.log(responseData);
+    };
+    fetchData();
+  }, [data.recentCourses]);
   return (
     <BlurFade inView>
       <section className="mx-auto max-w-6xl py-8 pt-4 md:px-4 md:pb-12">

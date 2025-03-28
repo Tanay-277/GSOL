@@ -9,6 +9,7 @@ const Dashboard = async () => {
   const data = await getDashboardData(session?.user?.id as string);
 
   return <DashboardClient data={data} />;
+
 };
 
 export default Dashboard;
