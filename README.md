@@ -1,7 +1,7 @@
 <div align="center">
   <h1>Mindwave</h1>
-  <p><strong>A modern webapp to revolutionize workplace learning by tailoring experiences to individual needs along with personalized courses and AI generated flashcard quizzes.</strong></p>
-  <a href="https://Mindwave-ai.vercel.app/">Visit Mindwave</a>
+  <p><strong>A modern web app designed to assess users' mental health and provide personalized course recommendations to enhance their well-being.</strong></p>
+<!--   <a href="https://Mindwave-ai.vercel.app/">Visit Mindwave</a> -->
 </div>
 
 ## Overview
@@ -72,7 +72,7 @@ Mindwave AI is a fully responsive and comprehensive webapp designed to explore h
 ## 📊 System Architecture
 
 <div align="center">
-  <img src="https://res.cloudinary.com/sutharjay/image/upload/v1736577023/rqb70irylv3j6ywphb0x.png" alt="System Architecture" width="100%" />
+  <img src="https://res.cloudinary.com/dougt66uq/image/upload/v1743854189/Screenshot_2025-04-05_172550_oyfsyx.png" alt="System Architecture" width="100%" />
 </div>
 
 ## 🚀 Getting Started
