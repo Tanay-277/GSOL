@@ -110,12 +110,19 @@ export default function OnBoarding() {
     disclaimer: string;
     diagnosis?: { id: string; name: string; description: string }[] | string;
   } | null>(null);
+  const [sidebarToggled, setSidebarToggled] = useState(false); // Added state to track if sidebar has been toggled
+  const [requestSuccess, setRequestSuccess] = useState(false); // Added state to track API request success
 
   const { toggleSidebar } = useSidebar();
 
   // Load only completed assessment history from localStorage on mount
   useEffect(() => {
-    toggleSidebar();
+    // Only toggle sidebar once
+    if (!sidebarToggled) {
+      toggleSidebar();
+      setSidebarToggled(true);
+    }
+
     const savedHistory = localStorage.getItem("mentalHealthAssessments");
     if (savedHistory) {
       try {
@@ -127,21 +134,20 @@ export default function OnBoarding() {
       }
     }
     // No need to load unfinished assessments anymore
-  }, [toggleSidebar]);
+  }, [toggleSidebar, sidebarToggled]);
 
   const fetchQuestions = async () => {
     // Clear any existing timeout
-
     setLoadingQuestions(true);
     setError("");
     setRetryingQuestion(false);
     setApiErrors(0);
+    setRequestSuccess(false); // Reset success state
 
     // Add retry logic for more resilience
     let retries = 2;
-    let success = false;
 
-    while (retries >= 0 && !success) {
+    while (retries >= 0 && !requestSuccess) {
       try {
         const response = await fetch("/api/generate-questions", {
           method: "POST",
@@ -167,7 +173,7 @@ export default function OnBoarding() {
         }
 
         setQuestions(data.questions);
-        success = true;
+        setRequestSuccess(true); // Set success state
 
         // If we're using fallback questions (indicated by source)
         if (data.source === "fallback") {
@@ -217,7 +223,7 @@ export default function OnBoarding() {
           await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       } finally {
-        if (retries < 0 || success) {
+        if (retries < 0 || requestSuccess) {
           setLoadingQuestions(false);
           setRetryingQuestion(false);
         }
@@ -259,6 +265,7 @@ export default function OnBoarding() {
       setShowConfirmation(false);
       setLoading(true);
       setShowResults(true); // Immediately show the results page with loading state
+      setRequestSuccess(false); // Reset success state
 
       // Add the last response that was stored when showing confirmation
       const finalResponses = [
@@ -293,7 +300,6 @@ export default function OnBoarding() {
       try {
         // Add retry logic for more resilience
         let retries = 2;
-        const success = false;
 
         // Set a timeout for the entire operation
         const analysisTimeout = setTimeout(() => {
@@ -303,7 +309,7 @@ export default function OnBoarding() {
           setProcessedAssessment(processAssessment(FALLBACK_ASSESSMENT));
         }, 30000); // 30 seconds global timeout
 
-        while (retries >= 0 && !success) {
+        while (retries >= 0 && !requestSuccess) {
           try {
             // Send all responses for analysis
             console.log("Sending responses for analysis");
@@ -421,6 +427,7 @@ export default function OnBoarding() {
               );
             }
 
+            setRequestSuccess(true); // Set success state
             clearTimeout(analysisTimeout);
             break;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
