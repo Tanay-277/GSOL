@@ -67,21 +67,21 @@ export function CourseContent({ course, videos }: CourseContentProps) {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        {/* <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="videos">Videos</TabsTrigger>
           <TabsTrigger value="flashcards">Flashcards</TabsTrigger>
-        </TabsList>
+        </TabsList> */}
 
         <TabsContent value="videos" className="mt-6">
           <BlurFade inView>
             <div className="flex flex-col gap-8">
-              <div className="flex flex-col space-y-2 text-left">
+              {/* <div className="flex flex-col space-y-2 text-left">
                 <H3 className="text-xl font-bold tracking-tight">Educational Videos</H3>
                 <P className="text-muted-foreground">Learn more about {course.topic}</P>
-              </div>
+              </div> */}
 
               {videos && videos.length > 0 ? (
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 w-full">
                   {videos.map((video) => (
                     <Card key={video.id} className="overflow-hidden">
                       <div className="relative">
