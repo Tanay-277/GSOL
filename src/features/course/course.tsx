@@ -10,11 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
 import { H2 } from "@/components/ui/typography";
 import { getCourse } from "@/features/course/actions/get-course";
@@ -59,12 +55,9 @@ const generateQuiz = async (courseId: string) => {
 };
 
 const generateVideo = async (courseId: string, chapterId: string) => {
-  const response = await fetch(
-    `/api/inngest/video?courseId=${courseId}&chapterId=${chapterId}`,
-    {
-      method: "GET",
-    },
-  );
+  const response = await fetch(`/api/inngest/video?courseId=${courseId}&chapterId=${chapterId}`, {
+    method: "GET",
+  });
 
   if (!response.ok) {
     throw new Error("Failed to generate flashcards");
@@ -91,9 +84,7 @@ export function CoursePage({ id }: Props) {
 
   const toggleChapter = (chapterId: string) => {
     setOpenChapters((prev) =>
-      prev.includes(chapterId)
-        ? prev.filter((id) => id !== chapterId)
-        : [...prev, chapterId],
+      prev.includes(chapterId) ? prev.filter((id) => id !== chapterId) : [...prev, chapterId],
     );
   };
 
@@ -107,33 +98,30 @@ export function CoursePage({ id }: Props) {
       errorToast(error.message);
     },
   });
-  const { mutate: generateQuizMutate, isPending: isGeneratingQuiz } =
-    useMutation({
-      mutationKey: ["generate-quiz"],
-      mutationFn: (courseId: string) => generateQuiz(courseId),
-      onSuccess: () => {
-        successToast("Quiz generated successfully");
-      },
-      onError: (error: Error) => {
-        errorToast(error.message);
-      },
-    });
+  const { mutate: generateQuizMutate, isPending: isGeneratingQuiz } = useMutation({
+    mutationKey: ["generate-quiz"],
+    mutationFn: (courseId: string) => generateQuiz(courseId),
+    onSuccess: () => {
+      successToast("Quiz generated successfully");
+    },
+    onError: (error: Error) => {
+      errorToast(error.message);
+    },
+  });
 
-  const { mutate: generateVideoMutate, isPending: isGeneratingVideo } =
-    useMutation({
-      mutationKey: ["generate-video"],
-      mutationFn: (data: { courseId: string; chapterId: string }) =>
-        generateVideo(data.courseId, data.chapterId),
-      onSuccess: () => {
-        successToast("Video generated successfully");
-      },
-      onError: (error: Error) => {
-        errorToast(error.message);
-      },
-    });
+  const { mutate: generateVideoMutate, isPending: isGeneratingVideo } = useMutation({
+    mutationKey: ["generate-video"],
+    mutationFn: (data: { courseId: string; chapterId: string }) =>
+      generateVideo(data.courseId, data.chapterId),
+    onSuccess: () => {
+      successToast("Video generated successfully");
+    },
+    onError: (error: Error) => {
+      errorToast(error.message);
+    },
+  });
 
-  const completedChapters =
-    course?.chapters?.filter((chapter) => chapter.completed).length || 0;
+  const completedChapters = course?.chapters?.filter((chapter) => chapter.completed).length || 0;
   const totalChapters = course?.chapters?.length || 0;
   const progressPercentage = (completedChapters / totalChapters) * 100;
 
@@ -171,12 +159,8 @@ export function CoursePage({ id }: Props) {
         <CardHeader className="pt-6">
           <div className="flex items-start justify-between">
             <div className="space-y-2">
-              <CardTitle className="text-3xl font-bold">
-                {course.name}
-              </CardTitle>
-              <CardDescription className="text-base">
-                {course.description}
-              </CardDescription>
+              <CardTitle className="text-3xl font-bold">{course.name}</CardTitle>
+              <CardDescription className="text-base">{course.description}</CardDescription>
             </div>
             <div className="flex flex-col items-end gap-2">
               <Badge variant="secondary" className="px-4 py-1">
@@ -200,23 +184,17 @@ export function CoursePage({ id }: Props) {
             {course.duration && (
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  {course.duration}
-                </span>
+                <span className="text-sm text-muted-foreground">{course.duration}</span>
               </div>
             )}
             <div className="flex items-center gap-2">
               <BookOpen className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">
-                {course.topic}
-              </span>
+              <span className="text-sm text-muted-foreground">{course.topic}</span>
             </div>
             {course.category && (
               <div className="flex items-center gap-2">
                 <BarChart className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  {course.category}
-                </span>
+                <span className="text-sm text-muted-foreground">{course.category}</span>
               </div>
             )}
             <div className="ml-auto flex items-center gap-2">
@@ -256,11 +234,7 @@ export function CoursePage({ id }: Props) {
             <H2 className="text-2xl font-medium">Flash Card</H2>
           </CardContent>
           <CardFooter className="flex justify-between border-t bg-muted/50 py-4">
-            <Button
-              variant="outline"
-              onClick={() => generate(course.id)}
-              disabled={isGenerating}
-            >
+            <Button variant="outline" onClick={() => generate(course.id)} disabled={isGenerating}>
               {isGenerating ? "Generating..." : "Generate"}
             </Button>
             <Button asChild>
@@ -305,9 +279,7 @@ export function CoursePage({ id }: Props) {
                 )
               }
             >
-              {openChapters.length === course.chapters.length
-                ? "Collapse All"
-                : "Expand All"}
+              {openChapters.length === course.chapters.length ? "Collapse All" : "Expand All"}
             </Button>
           </div>
         </CardHeader>
@@ -362,16 +334,12 @@ export function CoursePage({ id }: Props) {
                 </div>
                 <CollapsibleContent className="mt-4">
                   <div className="pl-9">
-                    <p className="text-sm text-muted-foreground">
-                      {chapter.description}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{chapter.description}</p>
                     <div className="mt-4">
                       <Button
                         size="sm"
                         onClick={() => {
-                          router.push(
-                            `/course/${course.id}/chapter/${chapter.id}`,
-                          );
+                          router.push(`/course/${course.id}/chapter/${chapter.id}`);
                           generateVideoMutate({
                             chapterId: chapter.id,
                             courseId: course.id,

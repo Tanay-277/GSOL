@@ -18,4 +18,4 @@ const inter = localFont({
   weight: "500",
 });
 
-export { geistSans, geistMono, inter };
+export { geistMono, geistSans, inter };

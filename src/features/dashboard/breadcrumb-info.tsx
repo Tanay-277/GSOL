@@ -21,11 +21,7 @@ const BreadcrumbInfo = () => {
           <BreadcrumbItem>
             <BreadcrumbLink href="/dashboard">
               <BreadcrumbPage className="flex items-center gap-2">
-                <FolderTwo
-                  size={16}
-                  className="h-5 w-5 font-bold md:flex"
-                  strokeWidth={2}
-                />
+                <FolderTwo size={16} className="h-5 w-5 font-bold md:flex" strokeWidth={2} />
                 {pathname.startsWith("/projects") && (
                   <span className="hidden md:flex">Dashboard</span>
                 )}
@@ -34,9 +30,7 @@ const BreadcrumbInfo = () => {
           </BreadcrumbItem>
           <BreadcrumbSeparator className="hidden md:block" />
           <BreadcrumbItem>
-            <BreadcrumbPage className="flex items-center gap-2">
-              User
-            </BreadcrumbPage>
+            <BreadcrumbPage className="flex items-center gap-2">User</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>

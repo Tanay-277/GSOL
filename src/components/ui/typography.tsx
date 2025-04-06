@@ -16,10 +16,7 @@ export function H1({
 }) {
   return (
     <h1
-      className={cn(
-        "scroll-m-20 text-4xl font-extrabold tracking-normal lg:text-5xl",
-        className,
-      )}
+      className={cn("scroll-m-20 text-4xl font-extrabold tracking-normal lg:text-5xl", className)}
       style={style}
     >
       {children}
@@ -27,39 +24,17 @@ export function H1({
   );
 }
 
-export function H2({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
+export function H2({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <h2
-      className={cn(
-        className,
-        "scroll-m-20 text-2xl font-semibold tracking-tight first:mt-0",
-      )}
-    >
+    <h2 className={cn(className, "scroll-m-20 text-2xl font-semibold tracking-tight first:mt-0")}>
       {children}
     </h2>
   );
 }
 
-export function H3({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
+export function H3({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <h3
-      className={cn(
-        "scroll-m-20 text-2xl font-semibold tracking-tight",
-        className,
-      )}
-    >
+    <h3 className={cn("scroll-m-20 text-2xl font-semibold tracking-tight", className)}>
       {children}
     </h3>
   );
@@ -74,13 +49,7 @@ export function H4({
   style?: React.CSSProperties;
 }) {
   return (
-    <h4
-      className={cn(
-        "scroll-m-20 text-xl font-semibold tracking-tight",
-        className,
-      )}
-      style={style}
-    >
+    <h4 className={cn("scroll-m-20 text-xl font-semibold tracking-tight", className)} style={style}>
       {children}
     </h4>
   );
@@ -93,12 +62,7 @@ export function InlineCode({
   className?: string;
 }) {
   return (
-    <code
-      className={cn(
-        "relative rounded px-1 py-0.5 text-sm text-primary",
-        className,
-      )}
-    >
+    <code className={cn("relative rounded px-1 py-0.5 text-sm text-primary", className)}>
       {children}
     </code>
   );
@@ -111,24 +75,13 @@ export function TypographyLead({
   className?: string;
 }) {
   return (
-    <p
-      className={cn(
-        "ml-1 mt-4 text-lg tracking-normal text-muted-foreground",
-        className,
-      )}
-    >
+    <p className={cn("ml-1 mt-4 text-lg tracking-normal text-muted-foreground", className)}>
       {children}
     </p>
   );
 }
 
-export function P({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
+export function P({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <p
       className={cn(
@@ -142,40 +95,14 @@ export function P({
   );
 }
 
-export function TLarge({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={cn("text-lg font-semibold", className)}>{children}</div>
-  );
+export function TLarge({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <div className={cn("text-lg font-semibold", className)}>{children}</div>;
 }
 
-export function TSmall({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <small className={cn("text-sm font-medium leading-none", className)}>
-      {children}
-    </small>
-  );
+export function TSmall({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <small className={cn("text-sm font-medium leading-none", className)}>{children}</small>;
 }
 
-export function TMuted({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <p className={cn("text-sm text-muted-foreground", className)}>{children}</p>
-  );
+export function TMuted({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <p className={cn("text-sm text-muted-foreground", className)}>{children}</p>;
 }

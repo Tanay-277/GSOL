@@ -1,10 +1,10 @@
 "use client";
 
-import { FC, useRef } from "react";
 import Image from "next/image";
+import { FC, useRef } from "react";
 
-import { useScroll, useTransform, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { motion, useScroll, useTransform } from "framer-motion";
 
 interface Props {
   classes?: string;
@@ -62,10 +62,7 @@ const ZoomParallax: FC<Props> = ({ classes }) => {
   ];
 
   return (
-    <section
-      ref={container}
-      className={cn("relative h-[200vh] w-full", classes)}
-    >
+    <section ref={container} className={cn("relative h-[200vh] w-full", classes)}>
       <div className="sticky top-0 h-screen overflow-hidden">
         {pictures.map(({ src, scale, classes }, index) => {
           return (

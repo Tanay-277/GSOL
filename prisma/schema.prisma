@@ -17,6 +17,7 @@ model User {
 
   courses     Course[]
   QuizAttempt QuizAttempt[]
+  assessments Assessment[]
 
   @@index([email])
   @@index([id])
@@ -37,12 +38,16 @@ model Course {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  assessmentId String?
+  assessment   Assessment? @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
+
   flashcards Flashcard[]
   quiz       Quiz?       @relation("CourseQuiz")
   chapters   Chapter[]
 
   @@index([topic])
   @@index([type])
+  @@index([assessmentId])
 }
 
 model Chapter {
@@ -94,7 +99,7 @@ model Quiz {
 model QuizQuestion {
   id        String   @id @default(cuid())
   question  String
-  options   String[]
+  options   String[] // array of strings
   answer    String
   quizId    String
   quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
@@ -103,6 +108,7 @@ model QuizQuestion {
 
   @@index([quizId])
 }
+
 
 model QuizAttempt {
   id        String   @id @default(cuid())
@@ -117,6 +123,20 @@ model QuizAttempt {
 
   @@index([userId])
   @@index([quizId])
+}
+
+model Assessment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  responses Json
+  result    Json?
+  issues    String[]
+  courses   Course[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 enum CourseType {

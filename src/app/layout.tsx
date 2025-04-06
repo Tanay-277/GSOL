@@ -7,7 +7,6 @@ import { getServerSession } from "next-auth";
 import { Toaster } from "sonner";
 import { authOptions } from "./api/auth/[...nextauth]/auth";
 import "./globals.css";
-import ClientChatbot from "@/components/ClientChatBot";
 
 export default async function RootLayout({
   children,
@@ -17,13 +16,14 @@ export default async function RootLayout({
   const session = await getServerSession(authOptions);
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
           "min-h-screen w-full scroll-smooth bg-background text-primary antialiased",
           geistSans.variable,
           geistSans.className,
         )}
+        suppressHydrationWarning
       >
         <ClientProvider session={session}>
           <ThemeProvider
@@ -31,11 +31,11 @@ export default async function RootLayout({
             defaultTheme="dark"
             enableSystem
             disableTransitionOnChange
+            storageKey="theme-preference"
           >
             <TooltipProvider>
               <Toaster />
               {children}
-              <ClientChatbot />
             </TooltipProvider>
           </ThemeProvider>
         </ClientProvider>

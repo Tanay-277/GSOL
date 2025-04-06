@@ -3,8 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import ContinueWithGoogle from "@/features/auth/continue-with-google";
 import { Label } from "@/components/ui/label";
+import ContinueWithGoogle from "@/features/auth/continue-with-google";
 
 export default function LoginForm() {
   return (
@@ -26,9 +26,7 @@ export default function LoginForm() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                OR
-              </span>
+              <span className="bg-background px-2 text-muted-foreground">OR</span>
             </div>
           </div>
           <div className="space-y-4">
@@ -40,10 +38,7 @@ export default function LoginForm() {
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" />
             </div>
-            <Button
-              className="w-full bg-[#000000] hover:bg-[#000000]/20"
-              type="submit"
-            >
+            <Button className="w-full bg-[#000000] hover:bg-[#000000]/20" type="submit">
               Login
             </Button>
           </div>

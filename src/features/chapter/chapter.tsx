@@ -1,20 +1,14 @@
 "use client";
 
-import { Chapter as ChapterPrisma, Course } from "@prisma/client";
-import { getRecommendation } from "./action/get-video-recommendation";
-import { useQuery } from "@tanstack/react-query";
 import { BlurFade } from "@/components/ui/blur";
-import { H3, P } from "@/components/ui/typography";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ExternalLink, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { H3, P } from "@/components/ui/typography";
+import { Chapter as ChapterPrisma, Course } from "@prisma/client";
+import { useQuery } from "@tanstack/react-query";
+import { ExternalLink, Play } from "lucide-react";
+import { getRecommendation } from "./action/get-video-recommendation";
 
 type Props = {
   data: Course;
@@ -44,9 +38,7 @@ export const Chapter = ({ data, chapter }: Props) => {
       <section className="mx-auto max-w-6xl py-8 pt-4 md:px-4 md:pb-12">
         <div className="flex flex-col gap-8">
           <div className="flex flex-col space-y-2 text-left">
-            <H3 className="text-2xl font-bold tracking-tight md:text-3xl">
-              {chapter.name}
-            </H3>
+            <H3 className="text-2xl font-bold tracking-tight md:text-3xl">{chapter.name}</H3>
             <P className="text-muted-foreground">{chapter.description}</P>
           </div>
 
@@ -79,11 +71,7 @@ export const Chapter = ({ data, chapter }: Props) => {
                         className="h-12 w-12 rounded-full"
                         asChild
                       >
-                        <a
-                          href={video.videoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
+                        <a href={video.videoUrl} target="_blank" rel="noopener noreferrer">
                           <Play className="h-6 w-6 fill-current" />
                         </a>
                       </Button>
@@ -101,9 +89,7 @@ export const Chapter = ({ data, chapter }: Props) => {
                         <ExternalLink className="h-4 w-4 text-muted-foreground" />
                       </a>
                     </CardTitle>
-                    <CardDescription className="line-clamp-2">
-                      {video.channelTitle}
-                    </CardDescription>
+                    <CardDescription className="line-clamp-2">{video.channelTitle}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <P className="line-clamp-2 text-sm text-muted-foreground">

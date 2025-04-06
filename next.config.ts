@@ -16,47 +16,48 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: '/:path*',
+        source: "/:path*",
         headers: [
           // Prevent XSS attacks
           {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
+            key: "X-XSS-Protection",
+            value: "1; mode=block",
           },
           // Prevent clickjacking
           {
-            key: 'X-Frame-Options',
-            value: 'DENY',
+            key: "X-Frame-Options",
+            value: "DENY",
           },
           // Block MIME type sniffing
           {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
+            key: "X-Content-Type-Options",
+            value: "nosniff",
           },
           // Content Security Policy to prevent various attacks
           {
-            key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://*; img-src 'self' data: https://*; style-src 'self' 'unsafe-inline'; font-src 'self' data:;",
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://*; img-src 'self' data: https://*; style-src 'self' 'unsafe-inline'; font-src 'self' data:;",
           },
           // Set strict HTTPS for at least 1 year (mental health data should be secure)
           {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=31536000; includeSubDomains; preload',
+            key: "Strict-Transport-Security",
+            value: "max-age=31536000; includeSubDomains; preload",
           },
           // Disable features that might be used to track users
           {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(self), interest-cohort=()',
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(self), interest-cohort=()",
           },
           // Indicate that this site provides a mental health service for appropriate handling
           {
-            key: 'X-Mental-Health-Service',
-            value: 'true',
+            key: "X-Mental-Health-Service",
+            value: "true",
           },
           // Prevent the browser from sending the referrer header when navigating away from the site
           {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
           },
         ],
       },
@@ -66,24 +67,24 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: '/help',
-        destination: '/onboarding',
+        source: "/help",
+        destination: "/onboarding",
         permanent: false,
       },
       {
-        source: '/assessment',
-        destination: '/onboarding',
+        source: "/assessment",
+        destination: "/onboarding",
         permanent: false,
       },
       {
-        source: '/resources',
-        destination: '/dashboard',
+        source: "/resources",
+        destination: "/dashboard",
         permanent: false,
       },
       // Ensure users are redirected to relevant pages
       {
-        source: '/mental-health',
-        destination: '/onboarding',
+        source: "/mental-health",
+        destination: "/onboarding",
         permanent: false,
       },
     ];

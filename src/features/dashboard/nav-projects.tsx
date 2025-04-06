@@ -49,10 +49,7 @@ export function NavProjects({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuAction showOnHover>
-                  <DotsVertical
-                    className="h-5 w-5 font-semibold"
-                    strokeWidth={2}
-                  />
+                  <DotsVertical className="h-5 w-5 font-semibold" strokeWidth={2} />
                   <span className="sr-only">More</span>
                 </SidebarMenuAction>
               </DropdownMenuTrigger>

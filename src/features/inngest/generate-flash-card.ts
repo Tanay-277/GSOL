@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, GenerationConfig } from "@google/generative-ai";
+import { GenerationConfig, GoogleGenerativeAI } from "@google/generative-ai";
 import { Course } from "@prisma/client";
 
 if (!process.env.GEMINI_API_KEY) {
@@ -78,12 +78,10 @@ export async function generateFlashcards(course: Course) {
 
   const flashcards = await generateContent(input);
 
-  const flashcardsData = flashcards.map(
-    (flashcard: { title: string; content: string }) => ({
-      title: flashcard.title,
-      content: flashcard.content,
-    }),
-  );
+  const flashcardsData = flashcards.map((flashcard: { title: string; content: string }) => ({
+    title: flashcard.title,
+    content: flashcard.content,
+  }));
 
   return flashcardsData;
 }

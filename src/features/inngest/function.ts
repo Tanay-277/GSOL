@@ -100,11 +100,7 @@ export const triggerQuiz = inngest.createFunction(
           quizId: quiz.id,
         }));
 
-        if (
-          !questionsData.every(
-            (q) => q.question && q.answer && Array.isArray(q.options),
-          )
-        ) {
+        if (!questionsData.every((q) => q.question && q.answer && Array.isArray(q.options))) {
           throw new Error("Invalid question data structure");
         }
 

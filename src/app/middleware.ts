@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { NextRequest, NextResponse } from "next/server";
 
 // Define routes that should always be accessible without authentication
 const publicRoutes = [
@@ -21,47 +21,47 @@ const sensitiveRoutes = [
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  
+
   // Check if route is public
-  if (publicRoutes.some(route => pathname.startsWith(route))) {
+  if (publicRoutes.some((route) => pathname.startsWith(route))) {
     return NextResponse.next();
   }
-  
+
   // For API routes, apply rate limiting and security headers
-  if (pathname.startsWith('/api/')) {
+  if (pathname.startsWith("/api/")) {
     const response = NextResponse.next();
-    
+
     // Apply security headers to API responses
-    response.headers.set('X-Content-Type-Options', 'nosniff');
-    response.headers.set('X-Frame-Options', 'DENY');
-    response.headers.set('X-XSS-Protection', '1; mode=block');
-    
+    response.headers.set("X-Content-Type-Options", "nosniff");
+    response.headers.set("X-Frame-Options", "DENY");
+    response.headers.set("X-XSS-Protection", "1; mode=block");
+
     return response;
   }
 
   // Get the token for authenticated routes
-  const token = await getToken({ 
+  const token = await getToken({
     req: request,
-    secret: process.env.NEXTAUTH_SECRET
+    secret: process.env.NEXTAUTH_SECRET,
   });
 
   // Redirect to sign in page if not authenticated
   if (!token) {
-    const url = new URL('/signin', request.url);
-    url.searchParams.set('callbackUrl', encodeURI(request.url));
+    const url = new URL("/signin", request.url);
+    url.searchParams.set("callbackUrl", encodeURI(request.url));
     return NextResponse.redirect(url);
   }
 
   // Additional checks for sensitive mental health routes
-  if (sensitiveRoutes.some(route => pathname.startsWith(route))) {
+  if (sensitiveRoutes.some((route) => pathname.startsWith(route))) {
     // Apply additional headers for sensitive health information
     const response = NextResponse.next();
-    response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
-    response.headers.set('Pragma', 'no-cache');
-    response.headers.set('Expires', '0');
-    
+    response.headers.set("Cache-Control", "private, no-cache, no-store, must-revalidate");
+    response.headers.set("Pragma", "no-cache");
+    response.headers.set("Expires", "0");
+
     // Could implement additional consent verification here for sensitive routes
-    
+
     return response;
   }
 

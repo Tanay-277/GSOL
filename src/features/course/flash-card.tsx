@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { Flashcard } from "@prisma/client";
 import { Card, CardContent } from "@/components/ui/card";
+import { Flashcard } from "@prisma/client";
+import { motion } from "framer-motion";
+import { useState } from "react";
 
 interface FlashCardProps {
   data: Flashcard[];
@@ -40,9 +40,7 @@ const FlashCard: React.FC<FlashCardProps> = ({ data }) => {
               }}
             >
               <CardContent className="flex h-full items-center justify-center bg-background p-6">
-                <h3 className="text-center text-xl font-semibold">
-                  {card.title}
-                </h3>
+                <h3 className="text-center text-xl font-semibold">{card.title}</h3>
               </CardContent>
             </Card>
 
@@ -54,9 +52,7 @@ const FlashCard: React.FC<FlashCardProps> = ({ data }) => {
               }}
             >
               <CardContent className="flex h-full items-center justify-center bg-background p-6">
-                <p className="max-h-full overflow-y-auto text-sm">
-                  {card.content}
-                </p>
+                <p className="max-h-full overflow-y-auto text-sm">{card.content}</p>
               </CardContent>
             </Card>
 

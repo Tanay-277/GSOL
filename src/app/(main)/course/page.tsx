@@ -1,13 +1,7 @@
 "use client";
 
 import { BlurFade } from "@/components/ui/blur";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { H3, P } from "@/components/ui/typography";
 import { getAllCourses } from "@/features/course/actions/get-all-course";
@@ -59,12 +53,8 @@ const Page = () => {
       <section className="mx-auto max-w-6xl py-8 pt-4 md:px-4 md:pb-12">
         <div className="flex flex-col gap-8">
           <div className="flex flex-col space-y-2 text-left">
-            <H3 className="text-2xl font-bold tracking-tight md:text-3xl">
-              Your Courses
-            </H3>
-            <P className="text-muted-foreground">
-              Your personalized and generated courses.
-            </P>
+            <H3 className="text-2xl font-bold tracking-tight md:text-3xl">Your Courses</H3>
+            <P className="text-muted-foreground">Your personalized and generated courses.</P>
           </div>
         </div>
 
@@ -80,37 +70,26 @@ const Page = () => {
           ) : (
             courses?.map((course) => (
               <Link href={`/course/${course.id}`} key={course.id}>
-                <Card
-                  key={course.id}
-                  className="relative flex flex-col shadow-none"
-                >
+                <Card key={course.id} className="relative flex flex-col shadow-none">
                   <CardHeader className="pt-6">
-                    <CardTitle className="text-xl font-semibold">
-                      {course.name}
-                    </CardTitle>
+                    <CardTitle className="text-xl font-semibold">{course.name}</CardTitle>
                     <p className="text-sm text-muted-foreground">
                       {new Date(course.createdAt).toLocaleDateString()}
                     </p>
                   </CardHeader>
 
                   <CardContent className="flex-grow pt-0">
-                    <p className="mb-4 line-clamp-2 text-muted-foreground">
-                      {course.description}
-                    </p>
+                    <p className="mb-4 line-clamp-2 text-muted-foreground">{course.description}</p>
 
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <BookOpen className="h-4 w-4" />
-                        <span className="capitalize">
-                          {course.level.toLowerCase()}
-                        </span>
+                        <span className="capitalize">{course.level.toLowerCase()}</span>
                       </div>
 
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <BarChart className="h-4 w-4" />
-                        <span className="capitalize">
-                          {course.type.toLowerCase()}
-                        </span>
+                        <span className="capitalize">{course.type.toLowerCase()}</span>
                       </div>
 
                       {course.duration && (

@@ -6,6 +6,7 @@ import { Menu, X } from "@mynaui/icons-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import ContinueWithGoogle from "../auth/continue-with-google";
 import Logo from "../global/logo";
 
 const navLinks = [
@@ -20,12 +21,7 @@ export function Nav({ className }: { className?: string }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav
-      className={cn(
-        "relative flex w-full items-center justify-between p-4",
-        className,
-      )}
-    >
+    <nav className={cn("relative flex w-full items-center justify-between p-4", className)}>
       <div className="flex w-1/3 items-center gap-2">
         <Logo show />
       </div>
@@ -60,11 +56,7 @@ export function Nav({ className }: { className?: string }) {
         </Button>
 
         <div className="hidden md:block">
-          <Link href="/signin" passHref>
-            <Button variant="default" size="sm">
-              Log in
-            </Button>
-          </Link>
+          <ContinueWithGoogle />
         </div>
       </div>
 
@@ -90,8 +82,7 @@ export function Nav({ className }: { className?: string }) {
                   onClick={() => setIsOpen(false)}
                   className={cn(
                     "rounded-lg px-4 py-2 text-base text-primary/60 hover:text-primary",
-                    pathname === link.href &&
-                      "bg-accent px-4 py-2 text-primary",
+                    pathname === link.href && "bg-accent px-4 py-2 text-primary",
                   )}
                 >
                   {link.label}
@@ -99,11 +90,7 @@ export function Nav({ className }: { className?: string }) {
               ))}
             </div>
             <div className="mt-auto">
-              <Link href="/signin" passHref className="w-full">
-                <Button className="w-full" variant="default" size="lg">
-                  Log in
-                </Button>
-              </Link>
+              <ContinueWithGoogle />
             </div>
           </div>
         </div>

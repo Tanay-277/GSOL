@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
 type QuizResultProps = {
@@ -42,9 +42,7 @@ export function QuizResult({ feedback }: QuizResultProps) {
             </div>
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Percentage</p>
-              <p className="text-2xl font-bold">
-                {feedback.percentageScore.toFixed(1)}%
-              </p>
+              <p className="text-2xl font-bold">{feedback.percentageScore.toFixed(1)}%</p>
             </div>
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Passing Score</p>
@@ -62,15 +60,11 @@ export function QuizResult({ feedback }: QuizResultProps) {
                   Question {i + 1}: {q.question}
                 </p>
                 <div className="grid gap-2 pl-4">
-                  <p
-                    className={q.isCorrect ? "text-green-600" : "text-red-600"}
-                  >
+                  <p className={q.isCorrect ? "text-green-600" : "text-red-600"}>
                     Your answer: {q.userAnswer}
                   </p>
                   {!q.isCorrect && (
-                    <p className="text-green-600">
-                      Correct answer: {q.correctAnswer}
-                    </p>
+                    <p className="text-green-600">Correct answer: {q.correctAnswer}</p>
                   )}
                 </div>
               </div>

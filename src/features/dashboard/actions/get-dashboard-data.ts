@@ -26,39 +26,38 @@ export type DashboardData = {
 
 export const getDashboardData = unstable_cache(
   async (userId: string): Promise<DashboardData> => {
-    const [totalCourses, coursesByType, coursesByLevel, recentCourses] =
-      await Promise.all([
-        db.course.count({
-          where: { userId },
-        }),
-        db.course.groupBy({
-          by: ["type"],
-          where: { userId },
-          _count: true,
-        }),
-        db.course.groupBy({
-          by: ["level"],
-          where: { userId },
-          _count: true,
-        }),
-        db.course.findMany({
-          where: { userId },
-          orderBy: { updatedAt: "desc" },
-          take: 5,
-          select: {
-            id: true,
-            name: true,
-            type: true,
-            level: true,
-            chapters: {
-              select: {
-                id: true,
-                completed: true,
-              },
+    const [totalCourses, coursesByType, coursesByLevel, recentCourses] = await Promise.all([
+      db.course.count({
+        where: { userId },
+      }),
+      db.course.groupBy({
+        by: ["type"],
+        where: { userId },
+        _count: true,
+      }),
+      db.course.groupBy({
+        by: ["level"],
+        where: { userId },
+        _count: true,
+      }),
+      db.course.findMany({
+        where: { userId },
+        orderBy: { updatedAt: "desc" },
+        take: 5,
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          level: true,
+          chapters: {
+            select: {
+              id: true,
+              completed: true,
             },
           },
-        }),
-      ]);
+        },
+      }),
+    ]);
 
     return {
       totalCourses,
@@ -72,12 +71,8 @@ export const getDashboardData = unstable_cache(
       })),
       recentCourses: recentCourses.map((course) => {
         const totalChapters = course.chapters.length;
-        const completedChapters = course.chapters.filter(
-          (chapter) => chapter.completed,
-        ).length;
-        const progress = totalChapters
-          ? Math.round((completedChapters / totalChapters) * 100)
-          : 0;
+        const completedChapters = course.chapters.filter((chapter) => chapter.completed).length;
+        const progress = totalChapters ? Math.round((completedChapters / totalChapters) * 100) : 0;
 
         return {
           id: course.id,

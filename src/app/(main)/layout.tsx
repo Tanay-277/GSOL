@@ -1,19 +1,15 @@
 "use client";
 
-import { useState, useEffect, ReactNode } from "react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/features/dashboard/app-sidebar";
 import BreadcrumbInfo from "@/features/dashboard/breadcrumb-info";
 import { QueryProvider } from "@/providers/query-provider";
+import { AlertCircle, RefreshCcw, ShieldAlert } from "lucide-react";
+import { ReactNode, useEffect, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { AlertCircle, ShieldAlert, RefreshCcw } from "lucide-react";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 
 // Crisis resources component for the mental health app
 const CrisisResources = () => {
@@ -27,11 +23,7 @@ const CrisisResources = () => {
           className="flex items-center gap-1 text-sm text-primary transition-colors hover:text-primary/80"
         >
           <ShieldAlert className="h-4 w-4" />
-          <span>
-            {showResources
-              ? "Hide crisis resources"
-              : "Need immediate support?"}
-          </span>
+          <span>{showResources ? "Hide crisis resources" : "Need immediate support?"}</span>
         </button>
 
         {showResources && (
@@ -40,9 +32,7 @@ const CrisisResources = () => {
               If you are experiencing a mental health crisis:
             </p>
             <ul className="list-disc space-y-1 pl-5">
-              <li>
-                National Suicide Prevention Lifeline: 988 or 1-800-273-8255
-              </li>
+              <li>National Suicide Prevention Lifeline: 988 or 1-800-273-8255</li>
               <li>Crisis Text Line: Text HOME to 741741</li>
               <li>Or call emergency services (911 in the US)</li>
             </ul>
@@ -73,13 +63,10 @@ function ErrorFallback({
           <AlertCircle className="mb-4 h-12 w-12 text-red-500" />
           <h2 className="mb-2 text-xl font-bold">Something went wrong</h2>
           <p className="mb-6 text-muted-foreground">
-            We are sorry, but we encountered an issue. This will not affect your
-            data or previous assessments.
+            We are sorry, but we encountered an issue. This will not affect your data or previous
+            assessments.
           </p>
-          <Button
-            onClick={resetErrorBoundary}
-            className="flex items-center gap-2"
-          >
+          <Button onClick={resetErrorBoundary} className="flex items-center gap-2">
             <RefreshCcw className="h-4 w-4" />
             Try again
           </Button>
@@ -126,7 +113,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       <QueryProvider>
         <SidebarProvider>
           <AppSidebar />
-          <SidebarInset className="flex flex-col rounded-lg overflow-hidden">
+          <SidebarInset className="flex flex-col overflow-hidden rounded-lg">
             <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between gap-2 bg-background pr-4 shadow-sm">
               <div className="flex items-center gap-2 px-4">
                 <SidebarTrigger className="-ml-1" />
@@ -144,9 +131,8 @@ export default function Layout({ children }: { children: ReactNode }) {
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Welcome to your mental health companion</AlertTitle>
                 <AlertDescription>
-                  This is a safe space to assess and track your mental
-                  wellbeing. All your information is stored privately on your
-                  device.
+                  This is a safe space to assess and track your mental wellbeing. All your
+                  information is stored privately on your device.
                 </AlertDescription>
               </Alert>
             )}

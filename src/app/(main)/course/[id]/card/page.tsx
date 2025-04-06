@@ -24,9 +24,7 @@ const Page = async ({ params }: Props) => {
       <section className="mx-auto max-w-6xl py-8 pt-4 md:px-4 md:pb-12">
         <div className="flex flex-col gap-8">
           <div className="flex flex-col space-y-2 text-left">
-            <H3 className="text-2xl font-bold tracking-tight md:text-3xl">
-              Flashcards
-            </H3>
+            <H3 className="text-2xl font-bold tracking-tight md:text-3xl">Flashcards</H3>
             <P className="text-muted-foreground">
               Your personalized and generated flashcards for {course?.name}.
             </P>

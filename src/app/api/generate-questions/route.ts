@@ -1,9 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { rateLimit } from '@/lib/rate-limit';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { rateLimit } from "@/lib/rate-limit";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { NextRequest, NextResponse } from "next/server";
 
 // Initialize the Gemini API client
-const genAI = process.env.GEMINI_API_KEY ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) : null;
+const genAI = process.env.GEMINI_API_KEY
+  ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+  : null;
 
 export async function POST(request: NextRequest) {
   if (!genAI) {
@@ -12,21 +14,34 @@ export async function POST(request: NextRequest) {
 
   try {
     // Rate limiting
-    const limiter = rateLimit({ interval: 60 * 1000, uniqueTokenPerInterval: 500 });
-    const ip = request.headers.get('x-forwarded-for') || 'anonymous';
-    
+    const limiter = rateLimit({
+      interval: 60 * 1000,
+      uniqueTokenPerInterval: 500,
+    });
+    const ip = request.headers.get("x-forwarded-for") || "anonymous";
+
     try {
       await limiter.check(5, ip);
     } catch {
-      return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 },
+      );
     }
 
     // Extract focus & complexity
-    let focus = "general wellness", complexity = "standard";
+    let focus = "general wellness",
+      complexity = "standard";
     try {
       const body = await request.json();
-      focus = (body.focus && typeof body.focus === 'string') ? body.focus.slice(0, 50).replace(/[^\w\s]/gi, '') : focus;
-      complexity = (body.complexity && typeof body.complexity === 'string') ? body.complexity.slice(0, 20).replace(/[^\w\s]/gi, '') : complexity;
+      focus =
+        body.focus && typeof body.focus === "string"
+          ? body.focus.slice(0, 50).replace(/[^\w\s]/gi, "")
+          : focus;
+      complexity =
+        body.complexity && typeof body.complexity === "string"
+          ? body.complexity.slice(0, 20).replace(/[^\w\s]/gi, "")
+          : complexity;
     } catch {}
 
     // Define model & chat session
@@ -45,9 +60,13 @@ export async function POST(request: NextRequest) {
     `;
 
     // Generate response with timeout
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000));
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Timeout")), 15000),
+    );
     const contentPromise = chatSession.sendMessage(prompt);
-    const result = await Promise.race([contentPromise, timeoutPromise]) as Awaited<typeof contentPromise>;
+    const result = (await Promise.race([contentPromise, timeoutPromise])) as Awaited<
+      typeof contentPromise
+    >;
 
     // Extract response text
     const candidates = result.response?.candidates;
@@ -69,24 +88,31 @@ export async function POST(request: NextRequest) {
       question: string;
       options: string[];
     }
-    
+
     interface ParsedData {
       questions: Partial<Question>[];
     }
-    
+
     const parsedData = JSON.parse(jsonText) as ParsedData;
-    
-    const validQuestions = parsedData.questions.filter((q): q is Question =>
-      Boolean(q.id) && typeof q.question === 'string' && Array.isArray(q.options) && q.options.length === 5
+
+    const validQuestions = parsedData.questions.filter(
+      (q): q is Question =>
+        Boolean(q.id) &&
+        typeof q.question === "string" &&
+        Array.isArray(q.options) &&
+        q.options.length === 5,
     );
 
     if (validQuestions.length < 5) {
       return NextResponse.json({ error: "Not enough valid questions" }, { status: 500 });
     }
 
-    return NextResponse.json({ questions: validQuestions, source: "ai-generated" }, { status: 200 });
-
+    return NextResponse.json(
+      { questions: validQuestions, source: "ai-generated" },
+      { status: 200 },
+    );
   } catch (error) {
+    console.log(error);
     return NextResponse.json({ error: "Generation error" }, { status: 500 });
   }
 }
