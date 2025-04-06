@@ -1,8 +1,8 @@
 "use client";
 
+import { X } from "@mynaui/icons-react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { cva, type VariantProps } from "class-variance-authority";
-import { X } from "@mynaui/icons-react";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -90,18 +90,12 @@ const ModalContent = React.forwardRef<
 ));
 ModalContent.displayName = DialogPrimitive.Content.displayName;
 
-const ModalHeader = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
+const ModalHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div className={cn("flex flex-col text-left", className)} {...props} />
 );
 ModalHeader.displayName = "ModalHeader";
 
-const ModalFooter = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
+const ModalFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
       "flex flex-col-reverse gap-y-2 sm:flex-row sm:justify-end sm:gap-y-0 sm:space-x-2",

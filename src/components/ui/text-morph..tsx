@@ -1,7 +1,7 @@
 "use client";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
-import { useMemo, useId } from "react";
+import { useId, useMemo } from "react";
 
 export type TextMorphProps = {
   children: string;
@@ -10,12 +10,7 @@ export type TextMorphProps = {
   style?: React.CSSProperties;
 };
 
-export function TextMorph({
-  children,
-  as: Component = "p",
-  className,
-  style,
-}: TextMorphProps) {
+export function TextMorph({ children, as: Component = "p", className, style }: TextMorphProps) {
   const uniqueId = useId();
 
   const characters = useMemo(() => {
@@ -27,12 +22,7 @@ export function TextMorph({
 
       return {
         id: `${uniqueId}-${lowerChar}${charCounts[lowerChar]}`,
-        label:
-          char === " "
-            ? "\u00A0"
-            : index === 0
-              ? char.toUpperCase()
-              : lowerChar,
+        label: char === " " ? "\u00A0" : index === 0 ? char.toUpperCase() : lowerChar,
       };
     });
   }, [children, uniqueId]);

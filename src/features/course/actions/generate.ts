@@ -1,9 +1,9 @@
 "use server";
 
-import { TFormValues } from "@/app/(main)/create/page";
 import { db } from "@/db";
 import { ChatMessage, CourseResponse, GenerationConfig } from "@/types";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { CourseLevel, CourseType } from "@prisma/client";
 
 if (!process.env.GEMINI_API_KEY) {
   throw new Error("Missing GEMINI_API_KEY environment variable");
@@ -76,7 +76,11 @@ export async function generateCourseContent({
   data,
   email,
 }: {
-  data: TFormValues;
+  data: {
+    topic: string;
+    level: string;
+    type: string;
+  };
   email: string;
 }): Promise<CourseGenerationResponse> {
   try {
@@ -141,9 +145,9 @@ export async function generateCourseContent({
           data: {
             name: courseResponse.name,
             description: courseResponse.description,
-            type: data.type,
+            type: data.type as CourseType,
             topic: data.topic,
-            level: data.level,
+            level: data.level as CourseLevel,
             category: "Programming",
             user: {
               connect: {

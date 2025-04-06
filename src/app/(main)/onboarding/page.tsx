@@ -1,22 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
-import {
-  AlertCircle,
-  Check,
-  ChevronsUpDown,
-  HelpCircle,
-  Info,
-  ShieldAlert,
-  ListChecks,
-  Heart,
-  BookOpen,
-  ListTodo,
-  Smile,
-} from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Command,
   CommandEmpty,
@@ -24,14 +9,26 @@ import {
   CommandInput,
   CommandItem,
 } from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Progress } from "@/components/ui/progress";
 import { useSidebar } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import {
+  AlertCircle,
+  BookOpen,
+  Check,
+  ChevronDown,
+  ChevronsUpDown,
+  Heart,
+  HelpCircle,
+  Info,
+  ListTodo,
+  ShieldAlert,
+  Smile,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 type Question = {
   id: number;
@@ -56,7 +53,6 @@ interface ApiResponse {
   selfCareSuggestions: string[];
   diagnosis: { id: string; name: string; description: string }[];
 }
-
 
 // Mental health crisis resources
 const CRISIS_RESOURCES = [
@@ -96,16 +92,13 @@ export default function OnBoarding() {
   const [loadingQuestions, setLoadingQuestions] = useState(false); // Changed to false initially
   const [assessment, setAssessment] = useState("");
   const [userResponses, setUserResponses] = useState<UserResponse[]>([]);
-  const [assessmentHistory, setAssessmentHistory] = useState<
-    AssessmentResult[]
-  >([]);
+  const [assessmentHistory, setAssessmentHistory] = useState<AssessmentResult[]>([]);
   const [error, setError] = useState("");
   const [focus, setFocus] = useState("general wellness");
   const [showCrisisResources, setShowCrisisResources] = useState(false);
   const [dataPrivacyAcknowledged, setDataPrivacyAcknowledged] = useState(false);
   const [apiErrors, setApiErrors] = useState(0);
   const [retryingQuestion, setRetryingQuestion] = useState(false);
-  const [fetchTimeout, setFetchTimeout] = useState<NodeJS.Timeout | null>(null);
   const [open, setOpen] = useState(false); // State for controlling combobox
   const [showConfirmation, setShowConfirmation] = useState(false); // New state for confirmation step
   const [lastResponse, setLastResponse] = useState<string>(""); // Store the last response temporarily
@@ -115,7 +108,7 @@ export default function OnBoarding() {
     recommendations: string;
     selfCare: string[];
     disclaimer: string;
-    diagnosis?: string; // Added diagnosis property
+    diagnosis?: { id: string; name: string; description: string }[] | string;
   } | null>(null);
 
   const { toggleSidebar } = useSidebar();
@@ -134,13 +127,10 @@ export default function OnBoarding() {
       }
     }
     // No need to load unfinished assessments anymore
-  }, []);
+  }, [toggleSidebar]);
 
   const fetchQuestions = async () => {
     // Clear any existing timeout
-    if (fetchTimeout) {
-      clearTimeout(fetchTimeout);
-    }
 
     setLoadingQuestions(true);
     setError("");
@@ -162,9 +152,7 @@ export default function OnBoarding() {
         });
 
         if (response.status === 429) {
-          setError(
-            "You've made too many requests. Please wait a moment and try again.",
-          );
+          setError("You've made too many requests. Please wait a moment and try again.");
           throw new Error("Rate limit exceeded");
         }
 
@@ -186,33 +174,25 @@ export default function OnBoarding() {
           console.log("Using fallback questions");
           setApiErrors((prev) => prev + 1);
         }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         console.error("Error generating questions:", error);
         retries--;
         setApiErrors((prev) => prev + 1);
 
         if (retries < 0) {
-          setError(
-            "We encountered an issue creating your assessment. Please try again later.",
-          );
+          setError("We encountered an issue creating your assessment. Please try again later.");
           // Use fallback questions
           setQuestions([
             {
               id: 1,
-              question:
-                "How would you rate your overall mood over the past two weeks?",
+              question: "How would you rate your overall mood over the past two weeks?",
               options: ["Very poor", "Poor", "Neutral", "Good", "Very good"],
             },
             {
               id: 2,
               question: "How often have you felt anxious or worried recently?",
-              options: [
-                "Almost constantly",
-                "Frequently",
-                "Sometimes",
-                "Rarely",
-                "Never",
-              ],
+              options: ["Almost constantly", "Frequently", "Sometimes", "Rarely", "Never"],
             },
             {
               id: 3,
@@ -227,13 +207,7 @@ export default function OnBoarding() {
             {
               id: 5,
               question: "How connected do you feel to others in your life?",
-              options: [
-                "Not at all",
-                "Slightly",
-                "Moderately",
-                "Considerably",
-                "Very",
-              ],
+              options: ["Not at all", "Slightly", "Moderately", "Considerably", "Very"],
             },
           ]);
         } else {
@@ -244,9 +218,6 @@ export default function OnBoarding() {
         }
       } finally {
         if (retries < 0 || success) {
-          if (fetchTimeout) {
-            clearTimeout(fetchTimeout);
-          }
           setLoadingQuestions(false);
           setRetryingQuestion(false);
         }
@@ -311,8 +282,7 @@ export default function OnBoarding() {
       const containsCrisisWord = finalResponses.some((r) =>
         crisisKeywords.some(
           (word) =>
-            r.answer.toLowerCase().includes(word) ||
-            r.question.toLowerCase().includes(word),
+            r.answer.toLowerCase().includes(word) || r.question.toLowerCase().includes(word),
         ),
       );
 
@@ -323,7 +293,7 @@ export default function OnBoarding() {
       try {
         // Add retry logic for more resilience
         let retries = 2;
-        let success = false;
+        const success = false;
 
         // Set a timeout for the entire operation
         const analysisTimeout = setTimeout(() => {
@@ -348,23 +318,30 @@ export default function OnBoarding() {
               body: JSON.stringify({ responses: finalResponses }),
               signal: controller.signal,
             });
-          
+
             clearTimeout(fetchTimeoutId);
-          
+
             if (response.status === 429) {
               setError("You've made too many requests. Please wait a moment and try again.");
               throw new Error("Rate limit exceeded");
             }
-          
+
             if (!response.ok) {
               const errorData = await response.json().catch(() => ({}));
               console.error("Error response:", response.status, errorData);
-              throw new Error(`Server error: ${response.status} - ${errorData.error || "Unknown error"}`);
+              throw new Error(
+                `Server error: ${response.status} - ${errorData.error || "Unknown error"}`,
+              );
             }
-          
-            const data = await response.json() as ApiResponse;
-          
-            if (!data.overallAssessment || !data.keyObservations || !data.selfCareSuggestions || !data.diagnosis) {
+
+            const data = (await response.json()) as ApiResponse;
+
+            if (
+              !data.overallAssessment ||
+              !data.keyObservations ||
+              !data.selfCareSuggestions ||
+              !data.diagnosis
+            ) {
               console.error("Missing key fields in response:", data);
               throw new Error("Response did not contain expected fields");
             }
@@ -373,7 +350,8 @@ export default function OnBoarding() {
               observations: data.keyObservations.join("\n"),
               recommendations: "", // Add empty recommendations
               selfCare: data.selfCareSuggestions,
-              disclaimer: "This assessment is not a clinical diagnosis and should not replace professional mental health advice.",
+              disclaimer:
+                "This assessment is not a clinical diagnosis and should not replace professional mental health advice.",
               diagnosis: data.diagnosis
                 .map((d) => `${d.id} - ${d.name}: ${d.description}`)
                 .join("\n"),
@@ -389,17 +367,63 @@ export default function OnBoarding() {
             try {
               const updatedHistory = [...assessmentHistory, newAssessment];
               setAssessmentHistory(updatedHistory);
-              localStorage.setItem(
-                "mentalHealthAssessments",
-                JSON.stringify(updatedHistory),
-              );
+              localStorage.setItem("mentalHealthAssessments", JSON.stringify(updatedHistory));
             } catch (storageError) {
               console.error("Error saving assessment history:", storageError);
               // If localStorage fails, we still have the assessment in memory to display
             }
 
+            // Generate courses based on the assessment
+            try {
+              console.log("Generating courses based on assessment");
+              const courseController = new AbortController();
+              const courseTimeoutId = setTimeout(() => courseController.abort(), 15000);
+
+              const courseResponse = await fetch("/api/generate-course", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  responses: finalResponses,
+                  assessment: data,
+                }),
+                signal: courseController.signal,
+              });
+
+              clearTimeout(courseTimeoutId);
+
+              if (!courseResponse.ok) {
+                console.error("Error generating courses:", courseResponse.status);
+                // Show error message but continue with assessment results
+                setError(
+                  "We couldn't generate personalized courses at this time. You can still view your assessment results.",
+                );
+              } else {
+                const courseData = await courseResponse.json();
+                console.log("Courses generated successfully:", courseData);
+
+                // Store the generated courses in localStorage for the dashboard
+                try {
+                  localStorage.setItem("generatedCourses", JSON.stringify(courseData.courses));
+                } catch (storageError) {
+                  console.error("Error saving courses to localStorage:", storageError);
+                }
+
+                // Show success message and redirect to dashboard
+                setError("");
+                console.log("Ready to access courses");
+              }
+            } catch (courseError) {
+              console.error("Error generating courses:", courseError);
+              setError(
+                "We couldn't generate personalized courses at this time. You can still view your assessment results.",
+              );
+            }
+
             clearTimeout(analysisTimeout);
             break;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (error: any) {
             console.error("Error analyzing responses:", error);
             retries--;
@@ -414,27 +438,29 @@ export default function OnBoarding() {
               setAssessment(
                 "We couldn't generate a personalized assessment at this time. Please try again later or consult with a mental health professional for an accurate evaluation.",
               );
-              setProcessedAssessment(processAssessment(
-                "We couldn't generate a personalized assessment at this time. Please try again later or consult with a mental health professional for an accurate evaluation."
-              ));
+              setProcessedAssessment(
+                processAssessment(
+                  "We couldn't generate a personalized assessment at this time. Please try again later or consult with a mental health professional for an accurate evaluation.",
+                ),
+              );
             } else {
               // Wait a second before retrying
               await new Promise((resolve) => setTimeout(resolve, 1000));
             }
           }
         }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         console.error("Error analyzing responses:", error);
-        setError(
-          error?.message ||
-            "We couldn't generate your assessment. Please try again later.",
-        );
+        setError(error?.message || "We couldn't generate your assessment. Please try again later.");
         setAssessment(
           "We couldn't generate a personalized assessment at this time. Please try again later or consult with a mental health professional for an accurate evaluation.",
         );
-        setProcessedAssessment(processAssessment(
-          "We couldn't generate a personalized assessment at this time. Please try again later or consult with a mental health professional for an accurate evaluation."
-        ));
+        setProcessedAssessment(
+          processAssessment(
+            "We couldn't generate a personalized assessment at this time. Please try again later or consult with a mental health professional for an accurate evaluation.",
+          ),
+        );
       } finally {
         setLoading(false);
       }
@@ -444,20 +470,6 @@ export default function OnBoarding() {
     }
   };
 
-const course = async () => {
-  const controller = new AbortController();
-  const fetchTimeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds timeout for fetch
-
-  const response = await fetch("/api/generate-course", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ responses: finalcourse }),
-    signal: controller.signal,
-  });
-}
-  
   const restartAssessment = () => {
     setStarted(true);
     setCurrentQuestion(0);
@@ -506,15 +518,17 @@ const course = async () => {
 
   // Process the assessment text into structured sections
   const processAssessment = (text: string) => {
-    let sections = {
-      overall: "",
-      observations: "",
-      recommendations: "",
-      selfCare: [] as string[],
-      disclaimer: "",
-    };
-
     try {
+      // Define sections
+      const sections = {
+        overall: "",
+        observations: "",
+        recommendations: "",
+        selfCare: [] as string[],
+        disclaimer: "",
+        diagnosis: [] as { id: string; name: string; description: string }[],
+      };
+
       // Extract overall assessment
       const overallMatch = text.match(/Overall Assessment[:\s]+([\s\S]+?)(?:Key Observations|$)/i);
       if (overallMatch && overallMatch[1]) {
@@ -522,13 +536,17 @@ const course = async () => {
       }
 
       // Extract key observations
-      const observationsMatch = text.match(/Key Observations[:\s]+([\s\S]+?)(?:Personalized Recommendations|$)/i);
+      const observationsMatch = text.match(
+        /Key Observations[:\s]+([\s\S]+?)(?:Personalized Recommendations|$)/i,
+      );
       if (observationsMatch && observationsMatch[1]) {
         sections.observations = observationsMatch[1].trim();
       }
 
       // Extract personalized recommendations
-      const recommendationsMatch = text.match(/Personalized Recommendations[:\s]+([\s\S]+?)(?:Self-Care Suggestions|$)/i);
+      const recommendationsMatch = text.match(
+        /Personalized Recommendations[:\s]+([\s\S]+?)(?:Self-Care Suggestions|$)/i,
+      );
       if (recommendationsMatch && recommendationsMatch[1]) {
         sections.recommendations = recommendationsMatch[1].trim();
       }
@@ -539,21 +557,23 @@ const course = async () => {
         // Extract bullet points
         const bulletPoints = selfCareMatch[1]
           .split(/[\n\r]+/)
-          .map(item => item.replace(/^[-•*]\s*/, '').trim())
-          .filter(item => item.length > 0);
-        
+          .map((item) => item.replace(/^[-•*]\s*/, "").trim())
+          .filter((item) => item.length > 0);
+
         sections.selfCare = bulletPoints;
       }
 
       // Extract disclaimer
-      const disclaimerMatch = text.match(/NOTE:[:\s]+([\s\S]+)$/i) || 
-                              text.match(/IMPORTANT:[:\s]+([\s\S]+)$/i) ||
-                              text.match(/DISCLAIMER:[:\s]+([\s\S]+)$/i);
+      const disclaimerMatch =
+        text.match(/NOTE:[:\s]+([\s\S]+)$/i) ||
+        text.match(/IMPORTANT:[:\s]+([\s\S]+)$/i) ||
+        text.match(/DISCLAIMER:[:\s]+([\s\S]+)$/i);
       if (disclaimerMatch && disclaimerMatch[1]) {
         sections.disclaimer = disclaimerMatch[1].trim();
       } else {
         // Default disclaimer if not found
-        sections.disclaimer = "This assessment is not a clinical diagnosis and should not replace professional mental health advice.";
+        sections.disclaimer =
+          "This assessment is not a clinical diagnosis and should not replace professional mental health advice.";
       }
 
       return sections;
@@ -565,7 +585,9 @@ const course = async () => {
         observations: "",
         recommendations: "",
         selfCare: [],
-        disclaimer: "This assessment is not a clinical diagnosis and should not replace professional mental health advice."
+        disclaimer:
+          "This assessment is not a clinical diagnosis and should not replace professional mental health advice.",
+        diagnosis: [],
       };
     }
   };
@@ -589,7 +611,7 @@ const course = async () => {
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
           {apiErrors > 0 && (
             <p className="mt-4 text-amber-600 dark:text-amber-400">
-              We're experiencing some delays. Please be patient.
+              We&apos;re experiencing some delays. Please be patient.
             </p>
           )}
         </div>
@@ -601,9 +623,7 @@ const course = async () => {
     return (
       <div className="flex h-full flex-col items-center justify-center bg-background">
         <div className="mx-4 max-w-2xl rounded-lg bg-card p-10 text-center shadow-md">
-          <h2 className="mb-6 text-2xl font-bold text-foreground text-red-600">
-            Error
-          </h2>
+          <h2 className="mb-6 text-2xl font-bold text-foreground text-red-600">Error</h2>
           <p className="mb-6 text-lg text-muted-foreground">{error}</p>
           <button
             className="rounded-md bg-primary px-6 py-3 text-lg text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
@@ -622,50 +642,41 @@ const course = async () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="mx-4 max-w-2xl rounded-lg bg-card p-10 text-center shadow-md"
+          transition={{ duration: 0.6 }}
+          className="mx-4 max-w-lg rounded-xl bg-card p-8 text-center shadow-md"
         >
-          <h1 className="mb-6 text-4xl font-bold text-foreground">
-            Mental Health Check-In
-          </h1>
-          <p className="mb-6 text-xl text-muted-foreground">
-            This brief assessment will help you understand your current mental
-            state. Your responses are private and will be used to provide
-            personalized feedback.
+          <h1 className="mb-4 text-3xl font-bold text-foreground">Mental Health Check-In</h1>
+          <p className="mb-5 text-base text-muted-foreground">
+            This brief assessment will help you understand your current mental state and provide
+            personalized recommendations.
           </p>
 
-          <Alert className="mb-6 bg-blue-50 dark:bg-blue-900/20">
+          <Alert className="mb-5 bg-blue-50 dark:bg-blue-900/20">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Important Information</AlertTitle>
-            <AlertDescription className="text-left">
-              This is not a diagnostic tool. The assessment provides general
-              feedback based on your responses. If you're experiencing
-              significant distress, please consult with a mental health
-              professional.
+            <AlertTitle>Not a Diagnostic Tool</AlertTitle>
+            <AlertDescription className="text-sm">
+              This provides general feedback based on your responses. For clinical diagnosis, please
+              consult a healthcare professional.
             </AlertDescription>
           </Alert>
 
           {assessmentHistory.length > 0 && (
-            <div className="mb-6">
-              <p className="mb-2 text-lg text-muted-foreground">
+            <div className="mb-5">
+              <p className="mb-2 text-sm text-muted-foreground">
                 You have {assessmentHistory.length} previous assessment
                 {assessmentHistory.length > 1 ? "s" : ""}
               </p>
-              <button
-                className="mb-6 rounded-md bg-secondary px-4 py-2 text-secondary-foreground shadow-sm transition-colors hover:bg-secondary/90"
-                onClick={viewHistory}
-              >
+              <Button variant="outline" className="w-full" onClick={viewHistory}>
                 View Assessment History
-              </button>
+              </Button>
             </div>
           )}
 
-          <div className="mb-8">
-            <label className="mb-2 block text-left text-lg font-medium">
+          <div className="mb-6">
+            <label className="mb-2 block text-left text-sm font-medium">
               What would you like to focus on?
             </label>
 
-            {/* Replace the select dropdown with a Combobox */}
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -675,18 +686,14 @@ const course = async () => {
                   className="w-full justify-between border border-input bg-background p-3 text-left font-normal"
                 >
                   {focus
-                    ? focusOptions.find((option) => option.value === focus)
-                        ?.label
+                    ? focusOptions.find((option) => option.value === focus)?.label
                     : "Select focus area..."}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-full p-0">
                 <Command>
-                  <CommandInput
-                    placeholder="Search for focus area..."
-                    className="h-9"
-                  />
+                  <CommandInput placeholder="Search for focus area..." className="h-9" />
                   <CommandEmpty>No focus area found.</CommandEmpty>
                   <CommandGroup>
                     {focusOptions.map((option) => (
@@ -702,9 +709,7 @@ const course = async () => {
                         <Check
                           className={cn(
                             "ml-auto h-4 w-4",
-                            focus === option.value
-                              ? "opacity-100"
-                              : "opacity-0",
+                            focus === option.value ? "opacity-100" : "opacity-0",
                           )}
                         />
                       </CommandItem>
@@ -715,7 +720,7 @@ const course = async () => {
             </Popover>
           </div>
 
-          <div className="mb-6 flex items-start">
+          <div className="mb-5 flex items-start">
             <input
               type="checkbox"
               id="privacy-consent"
@@ -723,14 +728,10 @@ const course = async () => {
               checked={dataPrivacyAcknowledged}
               onChange={(e) => setDataPrivacyAcknowledged(e.target.checked)}
             />
-            <label
-              htmlFor="privacy-consent"
-              className="ml-2 block text-left text-sm"
-            >
-              <span className="font-medium">Privacy & Data Usage: </span>I
-              understand that only my final assessment results will be stored
-              locally on my device. This data is not shared with third parties
-              or used for any purpose beyond providing me with this assessment.
+            <label htmlFor="privacy-consent" className="ml-2 block text-left text-xs">
+              <span className="font-medium">Privacy Notice: </span>
+              Assessment results will be stored locally on your device only and not shared with
+              third parties.
             </label>
           </div>
 
@@ -738,7 +739,7 @@ const course = async () => {
             whileHover={{ scale: dataPrivacyAcknowledged ? 1.02 : 1 }}
             whileTap={{ scale: dataPrivacyAcknowledged ? 0.98 : 1 }}
             className={cn(
-              "rounded-md px-8 py-3 text-xl shadow-sm transition-colors",
+              "w-full rounded-md py-3 text-lg font-medium shadow-sm transition-colors",
               dataPrivacyAcknowledged
                 ? "bg-primary text-primary-foreground hover:bg-primary/90"
                 : "cursor-not-allowed bg-gray-300 text-gray-500",
@@ -750,15 +751,15 @@ const course = async () => {
           </motion.button>
 
           {!dataPrivacyAcknowledged && (
-            <p className="mt-2 text-sm text-amber-600">
+            <p className="mt-2 text-xs text-amber-600">
               Please acknowledge the privacy notice to continue
             </p>
           )}
 
-          <div className="mt-8 border-t border-gray-200 pt-4 dark:border-gray-700">
+          <div className="mt-6 border-t border-gray-200 pt-4 dark:border-gray-700">
             <button
               onClick={() => setShowCrisisResources(!showCrisisResources)}
-              className="mx-auto flex items-center gap-1 text-primary hover:underline"
+              className="mx-auto flex items-center gap-1 text-sm text-primary hover:underline"
             >
               <ShieldAlert className="h-4 w-4" />
               <span>Crisis Resources</span>
@@ -768,22 +769,18 @@ const course = async () => {
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
-                className="mt-4 rounded-md bg-red-50 p-4 dark:bg-red-900/20"
+                className="mt-4 rounded-md bg-red-50 p-3 dark:bg-red-900/20"
               >
-                <h3 className="mb-2 font-bold text-red-700 dark:text-red-300">
+                <h3 className="mb-2 text-sm font-bold text-red-700 dark:text-red-300">
                   If you need immediate support:
                 </h3>
-                <ul className="space-y-2 text-left">
+                <ul className="space-y-1 text-left text-xs">
                   {CRISIS_RESOURCES.map((resource, idx) => (
                     <li key={idx}>
                       <strong>{resource.name}:</strong> {resource.contact}
                     </li>
                   ))}
                 </ul>
-                <p className="mt-2 text-sm">
-                  If you're in immediate danger, please call emergency services
-                  (911 in the US).
-                </p>
               </motion.div>
             )}
           </div>
@@ -796,9 +793,7 @@ const course = async () => {
         >
           {loading ? (
             <div className="py-8">
-              <h2 className="mb-6 text-3xl font-bold text-foreground">
-                Analyzing Your Responses
-              </h2>
+              <h2 className="mb-6 text-3xl font-bold text-foreground">Analyzing Your Responses</h2>
               <div className="relative mx-auto my-8 h-24 w-24">
                 <div className="absolute inset-0 h-full w-full animate-spin rounded-full border-b-2 border-t-2 border-primary"></div>
                 <div className="absolute inset-[6px] h-[calc(100%-12px)] w-[calc(100%-12px)] rounded-full border-2 border-dashed border-primary"></div>
@@ -807,14 +802,15 @@ const course = async () => {
                 </div>
               </div>
               <p className="text-lg text-muted-foreground">
-                We're carefully processing your responses to provide you with personalized insights.
+                We&apos;re carefully processing your responses to provide you with personalized
+                insights.
               </p>
               <p className="mt-4 text-sm text-muted-foreground">
                 This usually takes about 15-30 seconds.
               </p>
               {apiErrors > 1 && (
                 <p className="mt-4 text-amber-600 dark:text-amber-400">
-                  We're experiencing some delays. Thank you for your patience.
+                  We&apos;re experiencing some delays. Thank you for your patience.
                 </p>
               )}
             </div>
@@ -831,75 +827,115 @@ const course = async () => {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              
-              {processedAssessment ? (
-                <div className="mb-10 space-y-6">
-                    {/* Overall Assessment */}
-                    <div className="rounded-xl border border-muted bg-card p-6 text-left shadow-sm transition-all hover:shadow-md">
-                      <div className="mb-4 flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-900/30">
-                          <Heart className="h-5 w-5 text-rose-500" />
-                        </div>
-                        <h3 className="text-xl font-medium">Overall Assessment</h3>
-                      </div>
-                      <p className="text-lg leading-relaxed text-muted-foreground">
-                        {processedAssessment.overall}
-                      </p>
-                    </div>
 
-                    {/* Key Observations */}
-                    {processedAssessment.observations && (
-                      <div className="rounded-xl border border-muted bg-card p-6 text-left shadow-sm transition-all hover:shadow-md">
-                        <div className="mb-4 flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
-                            <BookOpen className="h-5 w-5 text-blue-500" />
+              {processedAssessment ? (
+                <div className="mb-8 space-y-5">
+                  {/* Overall Assessment */}
+                  <div className="rounded-xl border border-muted bg-card p-5 text-left shadow-sm">
+                    <div className="mb-2 flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-900/30">
+                        <Heart className="h-5 w-5 text-rose-500" />
+                      </div>
+                      <h3 className="text-xl font-medium">Overall Assessment</h3>
+                    </div>
+                    <p className="text-base leading-relaxed text-muted-foreground">
+                      {processedAssessment.overall}
+                    </p>
+                  </div>
+
+                  {/* Diagnosis Section using Collapsible */}
+                  {processedAssessment.diagnosis && (
+                    <Collapsible className="rounded-xl border border-muted bg-card shadow-sm">
+                      <div className="p-5">
+                        <CollapsibleTrigger className="flex w-full items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/30">
+                              <Info className="h-5 w-5 text-violet-500" />
+                            </div>
+                            <h3 className="text-xl font-medium">Potential Conditions</h3>
                           </div>
-                          <h3 className="text-xl font-medium">Key Observations</h3>
-                        </div>
-                        <p className="text-lg leading-relaxed text-muted-foreground">
+                          <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 [&[data-state=open]>svg]:rotate-180" />
+                        </CollapsibleTrigger>
+                      </div>
+                      <CollapsibleContent className="px-5 pb-5">
+                        {Array.isArray(processedAssessment.diagnosis) ? (
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            {processedAssessment.diagnosis.map((item, idx) => (
+                              <div
+                                key={idx}
+                                className="rounded-lg border border-muted bg-background p-4 shadow-sm"
+                              >
+                                <h4 className="mb-1 font-medium text-foreground">{item.name}</h4>
+                                <p className="text-sm text-muted-foreground">{item.description}</p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-base text-muted-foreground">
+                            {typeof processedAssessment.diagnosis === "string"
+                              ? processedAssessment.diagnosis
+                              : "Based on your responses, no specific conditions were identified. This is not a clinical diagnosis."}
+                          </p>
+                        )}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  )}
+
+                  {/* Key Observations using Collapsible */}
+                  {processedAssessment.observations && (
+                    <Collapsible className="rounded-xl border border-muted bg-card shadow-sm">
+                      <div className="p-5">
+                        <CollapsibleTrigger className="flex w-full items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+                              <BookOpen className="h-5 w-5 text-blue-500" />
+                            </div>
+                            <h3 className="text-xl font-medium">Key Observations</h3>
+                          </div>
+                          <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 [&[data-state=open]>svg]:rotate-180" />
+                        </CollapsibleTrigger>
+                      </div>
+                      <CollapsibleContent className="px-5 pb-5">
+                        <p className="text-base leading-relaxed text-muted-foreground">
                           {processedAssessment.observations}
                         </p>
-                      </div>
-                    )}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  )}
 
-                    {/* Personalized Recommendations */}
-                    {processedAssessment.recommendations && (
-                      <div className="rounded-xl border border-muted bg-card p-6 text-left shadow-sm transition-all hover:shadow-md">
-                        <div className="mb-4 flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-                            <ListChecks className="h-5 w-5 text-green-500" />
+                  {/* Self-Care Suggestions using Collapsible */}
+                  {processedAssessment.selfCare && processedAssessment.selfCare.length > 0 && (
+                    <Collapsible className="rounded-xl border border-muted bg-card shadow-sm">
+                      <div className="p-5">
+                        <CollapsibleTrigger className="flex w-full items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+                              <ListTodo className="h-5 w-5 text-amber-500" />
+                            </div>
+                            <h3 className="text-xl font-medium">Self-Care Recommendations</h3>
                           </div>
-                          <h3 className="text-xl font-medium">Recommendations</h3>
-                        </div>
-                        <p className="text-lg leading-relaxed text-muted-foreground">
-                          {processedAssessment.recommendations}
-                        </p>
+                          <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 [&[data-state=open]>svg]:rotate-180" />
+                        </CollapsibleTrigger>
                       </div>
-                    )}
-
-                    {/* Self-Care Suggestions */}
-                    {processedAssessment.selfCare && processedAssessment.selfCare.length > 0 && (
-                      <div className="rounded-xl border border-muted bg-card p-6 text-left shadow-sm transition-all hover:shadow-md">
-                        <div className="mb-4 flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
-                            <ListTodo className="h-5 w-5 text-amber-500" />
-                          </div>
-                          <h3 className="text-xl font-medium">Self-Care Ideas</h3>
-                        </div>
-                        <ul className="ml-2 space-y-4">
+                      <CollapsibleContent className="px-5 pb-5">
+                        <ul className="ml-2 space-y-3">
                           {processedAssessment.selfCare.map((item, idx) => (
-                            <li key={idx} className="flex items-start gap-3 text-lg text-muted-foreground">
-                              <div className="mt-2 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
-                                <Check className="h-3.5 w-3.5 text-primary" />
+                            <li
+                              key={idx}
+                              className="flex items-start gap-3 text-base text-muted-foreground"
+                            >
+                              <div className="mt-1 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/10">
+                                <Check className="h-3 w-3 text-primary" />
                               </div>
                               <span>{item}</span>
                             </li>
                           ))}
                         </ul>
-                      </div>
-                    )}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  )}
 
-                    {/* Disclaimer */}
+                  {/* Disclaimer */}
                   {processedAssessment.disclaimer && (
                     <div className="rounded-lg bg-blue-50 p-4 text-left dark:bg-blue-900/20">
                       <div className="flex items-start">
@@ -910,15 +946,50 @@ const course = async () => {
                       </div>
                     </div>
                   )}
+
+                  {/* Personalized Courses Button - Updated to go directly to course */}
+                  <div className="mt-6 rounded-xl border border-muted bg-card p-5 text-center shadow-sm">
+                    <div className="mb-3 flex items-center justify-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+                        <BookOpen className="h-5 w-5 text-green-500" />
+                      </div>
+                      <h3 className="text-xl font-medium">Your Personalized Course</h3>
+                    </div>
+                    <p className="mb-5 text-base text-muted-foreground">
+                      Based on your assessment results, we&apos;ve created a customized learning
+                      path to help you improve your mental wellbeing.
+                    </p>
+                    <Button
+                      onClick={() => {
+                        // Get courses from localStorage
+                        const courses = localStorage.getItem("generatedCourses");
+                        if (courses) {
+                          const parsedCourses = JSON.parse(courses);
+                          if (parsedCourses && parsedCourses.length > 0) {
+                            // Navigate directly to the first course
+                            router.push(`/course/${parsedCourses[0].id}`);
+                          } else {
+                            router.push("/course");
+                          }
+                        } else {
+                          router.push("/course");
+                        }
+                      }}
+                      className="bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:text-white dark:hover:bg-green-800"
+                      size="lg"
+                    >
+                      Start My Course
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="mb-10 text-left">
-                  <p className="whitespace-pre-line text-lg text-muted-foreground">
+                  <p className="whitespace-pre-line text-base text-muted-foreground">
                     {assessment}
                   </p>
                 </div>
               )}
-              
+
               {showCrisisResources && (
                 <Alert className="mb-6 bg-red-50 dark:bg-red-900/20">
                   <ShieldAlert className="h-4 w-4 text-red-600 dark:text-red-400" />
@@ -927,8 +998,8 @@ const course = async () => {
                   </AlertTitle>
                   <AlertDescription className="text-left">
                     <p className="mb-2">
-                      Based on your responses, we want to ensure you have access
-                      to immediate support:
+                      Based on your responses, we want to ensure you have access to immediate
+                      support:
                     </p>
                     <ul className="list-disc space-y-1 pl-5">
                       {CRISIS_RESOURCES.map((resource, idx) => (
@@ -938,8 +1009,8 @@ const course = async () => {
                       ))}
                     </ul>
                     <p className="mt-2 font-semibold">
-                      If you're in immediate danger, please call emergency
-                      services (911 in the US).
+                      If you&apos;re in immediate danger, please call emergency services (911 in the
+                      US).
                     </p>
                   </AlertDescription>
                 </Alert>
@@ -1003,17 +1074,16 @@ const course = async () => {
                   Ready to Submit Your Assessment?
                 </h2>
                 <p className="mb-8 text-muted-foreground">
-                  You've answered all the questions. Click "Submit" to receive
-                  your personalized feedback.
+                  You&apos;ve answered all the questions. Click &quot;Submit&quot; to receive your
+                  personalized feedback.
                 </p>
 
                 <div className="mb-6 rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
                   <div className="flex items-start">
                     <Info className="mr-2 mt-0.5 h-5 w-5 text-blue-600 dark:text-blue-400" />
                     <p className="text-left text-sm text-muted-foreground">
-                      Your responses will be analyzed to provide personalized
-                      feedback about your mental health. This is not a clinical
-                      diagnosis.
+                      Your responses will be analyzed to provide personalized feedback about your
+                      mental health. This is not a clinical diagnosis.
                     </p>
                   </div>
                 </div>
@@ -1108,8 +1178,7 @@ const course = async () => {
                   <ul className="space-y-1 text-left">
                     {CRISIS_RESOURCES.map((resource, idx) => (
                       <li key={idx} className="text-sm">
-                        <span className="font-semibold">{resource.name}:</span>{" "}
-                        {resource.contact}
+                        <span className="font-semibold">{resource.name}:</span> {resource.contact}
                       </li>
                     ))}
                   </ul>

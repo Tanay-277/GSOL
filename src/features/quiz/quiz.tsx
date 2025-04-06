@@ -82,10 +82,7 @@ export const QuizPage = ({ id }: Props) => {
 
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 {[...Array(4)].map((_, index) => (
-                  <div
-                    key={index}
-                    className="relative flex rounded-lg border border-input p-4"
-                  >
+                  <div key={index} className="relative flex rounded-lg border border-input p-4">
                     <Skeleton className="absolute left-4 top-4 h-4 w-4 rounded-full" />
                     <div className="flex-1 pl-8">
                       <Skeleton className="h-5 w-3/4" />
@@ -114,9 +111,7 @@ export const QuizPage = ({ id }: Props) => {
       <section className="mx-auto max-w-4xl py-8 pt-4 md:px-4 md:pb-12">
         <div className="flex flex-col">
           <div className="flex flex-col space-y-2 text-left">
-            <H3 className="text-2xl font-bold tracking-tight md:text-3xl">
-              Quiz: {quiz.title}
-            </H3>
+            <H3 className="text-2xl font-bold tracking-tight md:text-3xl">Quiz: {quiz.title}</H3>
             <P className="text-muted-foreground">Course: {quiz.course.name}</P>
           </div>
 
@@ -134,9 +129,7 @@ export const QuizPage = ({ id }: Props) => {
 
               <RadioGroup
                 value={userAnswers[question?.id as string]}
-                onValueChange={(value) =>
-                  handleAnswerSelect(question?.id as string, value)
-                }
+                onValueChange={(value) => handleAnswerSelect(question?.id as string, value)}
                 className="mt-4 grid gap-3 md:grid-cols-2"
               >
                 {question?.options.map((option, index) => (
@@ -193,9 +186,7 @@ export const QuizPage = ({ id }: Props) => {
 
           <Separator className="my-4 mt-8" />
 
-          {submitMutation.isSuccess && (
-            <QuizResult feedback={submitMutation.data.feedback} />
-          )}
+          {submitMutation.isSuccess && <QuizResult feedback={submitMutation.data.feedback} />}
         </div>
       </section>
     </BlurFade>

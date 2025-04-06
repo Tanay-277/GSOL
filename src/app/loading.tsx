@@ -1,5 +1,4 @@
 import { SpinnerOne } from "@mynaui/icons-react";
-import React from "react";
 
 const Loading = () => {
   return (

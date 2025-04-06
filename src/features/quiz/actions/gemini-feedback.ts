@@ -1,7 +1,7 @@
 "use server";
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { db } from "@/db";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 

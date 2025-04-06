@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sidebar";
 import { NavMain } from "@/features/dashboard/nav-main";
 import { NavUser } from "@/features/dashboard/nav-user";
-import { Frame, Terminal } from "@mynaui/icons-react";
+import { Book, Frame, Terminal, User } from "@mynaui/icons-react";
 import * as React from "react";
 import Logo from "../global/logo";
 
@@ -26,21 +26,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {
         title: "Dashboard",
         url: "/dashboard",
-        icon: (
-          <Terminal size={16} className="font-semibold" strokeWidth={1.08} />
-        ),
+        icon: <Terminal size={16} className="font-semibold" strokeWidth={1.08} />,
         isActive: true,
         items: [
           {
             title: "Analytics",
             url: "/dashboard/analytics",
           },
+          {
+            title: "Overview",
+            url: "/dashboard",
+          },
         ],
       },
       {
         title: "Courses",
-        url: "#",
-        icon: <Frame size={16} className="font-semibold" strokeWidth={1.08} />,
+        url: "/course",
+        icon: <Book size={16} className="font-semibold" strokeWidth={1.08} />,
         isActive: true,
         items: [
           {
@@ -48,10 +50,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             url: "/course",
           },
           {
-            title: "Create",
-            url: "/create",
+            title: "Onboarding",
+            url: "/onboarding",
           },
         ],
+      },
+
+      {
+        title: "History",
+        url: "/history",
+        icon: <Frame size={16} className="font-semibold" strokeWidth={1.08} />,
+      },
+      {
+        title: "Account",
+        url: "/account",
+        icon: <User size={16} className="font-semibold" strokeWidth={1.08} />,
       },
     ],
   };
@@ -61,11 +74,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              size="lg"
-              className="rounded-xl bg-background"
-            >
+            <SidebarMenuButton asChild size="lg" className="rounded-xl bg-background">
               <Logo />
             </SidebarMenuButton>
           </SidebarMenuItem>

@@ -1,6 +1,3 @@
 {
-    "rewrites": [
-      { "source": "/api/inngest", "destination": "/api/inngest" }
-    ]
-  }
-  
+  "rewrites": [{ "source": "/api/inngest", "destination": "/api/inngest" }]
+}

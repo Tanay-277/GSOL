@@ -1,49 +1,27 @@
 "use client";
 
 import { BlurFade } from "@/components/ui/blur";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { H3, P } from "@/components/ui/typography";
-import {
-  Bar,
-  BarChart,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { DashboardData } from "./actions/get-dashboard-data";
 import Link from "next/link";
 import { useEffect } from "react";
-import { log } from "console";
+import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
+import { DashboardData } from "./actions/get-dashboard-data";
 
-const COLORS = [
-  "hsl(var(--primary))",
-  "hsl(var(--secondary))",
-  "hsl(var(--accent))",
-];
+const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accent))"];
 
 export function DashboardClient({ data }: { data: DashboardData }) {
+  console.log(localStorage.getItem("mentalHealthAssessments") || "[]");
 
   useEffect(() => {
-
-    const assessments = JSON.parse(
-      localStorage.getItem("mentalHealthAssessments") || "[]",
-    );
+    const assessments = JSON.parse(localStorage.getItem("mentalHealthAssessments") || "[]");
     const lastassessment = Array.isArray(assessments)
       ? assessments.pop()
       : "No previous assessment found";
 
-      console.log(lastassessment);
+    console.log(lastassessment);
 
     const fetchData = async () => {
       const response = await fetch("/api/generate-course", {
@@ -51,24 +29,23 @@ export function DashboardClient({ data }: { data: DashboardData }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: lastassessment
+        body: lastassessment,
       });
       const responseData = await response.json();
       console.log(responseData);
     };
     fetchData();
   }, [data.recentCourses]);
+
   return (
     <BlurFade inView>
       <section className="mx-auto max-w-6xl py-8 pt-4 md:px-4 md:pb-12">
         <div className="flex flex-col gap-8">
           <div className="flex flex-col space-y-2 text-left">
-            <H3 className="text-2xl font-bold tracking-tight md:text-3xl">
-              Your Dashboard
-            </H3>
+            <H3 className="text-2xl font-bold tracking-tight md:text-3xl">Your Dashboard</H3>
             <P className="text-muted-foreground">
-              Welcome to your dashboard. Here you can track your progress across{" "}
-              {data.totalCourses} courses.
+              Welcome to your dashboard. Here you can track your progress across {data.totalCourses}{" "}
+              courses.
             </P>
           </div>
 
@@ -76,9 +53,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
             <Card className="relative border-none shadow-none">
               <CardHeader className="pt-6">
                 <CardTitle>Course Types</CardTitle>
-                <CardDescription>
-                  Distribution of your courses by type
-                </CardDescription>
+                <CardDescription>Distribution of your courses by type</CardDescription>
               </CardHeader>
               <CardContent className="h-[200px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -92,10 +67,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                       outerRadius={80}
                     >
                       {data.coursesByType.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                        />
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
                   </PieChart>
@@ -130,15 +102,11 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Total Courses</span>
-                    <span className="text-2xl font-bold">
-                      {data.totalCourses}
-                    </span>
+                    <span className="text-2xl font-bold">{data.totalCourses}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Active Types</span>
-                    <span className="text-2xl font-bold">
-                      {data.coursesByType.length}
-                    </span>
+                    <span className="text-2xl font-bold">{data.coursesByType.length}</span>
                   </div>
                 </div>
               </CardContent>
@@ -151,12 +119,8 @@ export function DashboardClient({ data }: { data: DashboardData }) {
           <Card className="relative border-none px-0 shadow-none">
             <CardHeader className="px-0">
               <div className="flex flex-col space-y-2 text-left">
-                <H3 className="text-2xl font-bold tracking-tight md:text-3xl">
-                  Recent Courses
-                </H3>
-                <P className="text-muted-foreground">
-                  Your most recent courses
-                </P>
+                <H3 className="text-2xl font-bold tracking-tight md:text-3xl">Recent Courses</H3>
+                <P className="text-muted-foreground">Your most recent courses</P>
               </div>
             </CardHeader>
             <CardContent className="space-y-6 px-0">
@@ -171,12 +135,9 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium">
-                          {course.progress}%
-                        </p>
+                        <p className="text-sm font-medium">{course.progress}%</p>
                         <p className="text-xs text-muted-foreground">
-                          {course.completedChapters} of {course.totalChapters}{" "}
-                          chapters
+                          {course.completedChapters} of {course.totalChapters} chapters
                         </p>
                       </div>
                     </div>

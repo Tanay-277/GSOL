@@ -6,13 +6,7 @@ export const fetchUserData = async (email: string) => {
   });
 };
 
-export const updateUserData = async ({
-  id,
-  name,
-}: {
-  id: string;
-  name: string;
-}) => {
+export const updateUserData = async ({ id, name }: { id: string; name: string }) => {
   return db.user.update({
     where: { id },
     data: {

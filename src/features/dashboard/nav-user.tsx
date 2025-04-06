@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  CheckWaves,
-  ChevronUpDown,
-  CogOne,
-  Logout,
-  Sparkles,
-} from "@mynaui/icons-react";
+import { CheckWaves, ChevronUpDown, CogOne, Logout, Sparkles } from "@mynaui/icons-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
