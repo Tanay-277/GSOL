@@ -16,7 +16,8 @@ const ContinueWithGoogle = () => {
     try {
       setIsLoggingIn(true);
       const result = await signIn("google", {
-        redirect: false,
+        redirect: true,
+        callbackUrl: `${window.location.origin}/onboarding`,
       });
 
       if (result?.error) {
