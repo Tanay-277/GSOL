@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { H3, P } from "@/components/ui/typography";
 import { getAllCourses } from "@/features/course/actions/get-all-course";
 import { useUser } from "@/hooks/use-user";
-import { Separator } from "@radix-ui/react-separator";
+// import { Separator } from "@radix-ui/react-separator";
 import { useQuery } from "@tanstack/react-query";
 
 const LoadingSkeleton = () => (
@@ -38,7 +38,7 @@ const Page = () => {
   const { user } = useUser();
 
   const {
-    data: courses,
+    // data: courses,
     isLoading,
     isError,
   } = useQuery({

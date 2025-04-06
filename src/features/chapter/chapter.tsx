@@ -9,6 +9,7 @@ import { Chapter as ChapterPrisma, Course } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink, Play } from "lucide-react";
 import { getRecommendation } from "./action/get-video-recommendation";
+import Image from "next/image";
 
 type Props = {
   data: Course;
@@ -59,7 +60,7 @@ export const Chapter = ({ data, chapter }: Props) => {
               {result?.map((video) => (
                 <Card key={video.id} className="overflow-hidden">
                   <div className="relative">
-                    <img
+                    <Image
                       src={video.thumbnail}
                       alt={video.title}
                       className="h-48 w-full object-cover"
