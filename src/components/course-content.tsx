@@ -6,9 +6,10 @@ import { BlurFade } from "@/components/ui/blur";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { H3, P } from "@/components/ui/typography";
 import { ExternalLink, Play } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -81,11 +82,11 @@ export function CourseContent({ course, videos }: CourseContentProps) {
               </div> */}
 
               {videos && videos.length > 0 ? (
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 w-full">
+                <div className="grid w-full gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {videos.map((video) => (
                     <Card key={video.id} className="overflow-hidden">
                       <div className="relative">
-                        <img
+                        <Image
                           src={
                             video.thumbnail || `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`
                           }
