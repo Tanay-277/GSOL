@@ -13,6 +13,8 @@ interface UserResponse {
 }
 
 export async function POST(request: NextRequest) {
+  console.log("POST request to /api/analyse-responses started");
+
   try {
     // Apply rate limiting (3 requests per minute per IP)
     const limiter = rateLimit({
@@ -22,11 +24,13 @@ export async function POST(request: NextRequest) {
 
     // Get client IP for rate limiting
     const ip = request.headers.get("x-forwarded-for") || "anonymous";
+    console.log("Client IP for rate limiting:", ip);
 
     try {
       await limiter.check(3, ip); // 3 requests per minute per IP for analysis
-    } catch {
-      console.log("Rate limit exceeded for IP:", ip);
+      console.log("Rate limit check passed");
+    } catch (e) {
+      console.log("Rate limit exceeded for IP:", ip,e);
       return NextResponse.json(
         { error: "Too many requests. Please try again later." },
         { status: 429 },
@@ -42,12 +46,16 @@ export async function POST(request: NextRequest) {
     // Parse and validate request body
     let body;
     try {
-      body = await request.json();
-    } catch {
+      const text = await request.text();
+      console.log("Request body length:", text.length);
+      body = JSON.parse(text);
+    } catch (parseError) {
+      console.error("Error parsing request body:", parseError);
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
 
     const { responses } = body;
+    console.log("Received responses array length:", responses?.length || 0);
 
     // Validate responses structure
     if (!responses || !Array.isArray(responses) || responses.length === 0) {
@@ -81,6 +89,16 @@ export async function POST(request: NextRequest) {
       answer: r.answer.slice(0, 500).replace(/<[^>]*>?/gm, ""),
     }));
 
+    // Format the responses for the prompt
+    const formattedResponses = sanitizedResponses
+      .map(
+        (r: UserResponse, i: number) =>
+          `Question ${i + 1}: ${r.question}\nAnswer ${i + 1}: ${r.answer}`,
+      )
+      .join("\n\n");
+
+    console.log("Formatted responses prepared, sending to Gemini API");
+
     // Access the generative model with safety settings
     const model = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
@@ -103,11 +121,6 @@ export async function POST(request: NextRequest) {
         },
       ],
     });
-
-    // Format the responses for the prompt
-    const formattedResponses = sanitizedResponses
-      .map((r: UserResponse) => `Question: ${r.question}\nAnswer: ${r.answer}`)
-      .join("\n\n");
 
     // Create a prompt for mental health analysis with clear boundaries and structured JSON output
     const prompt = `
@@ -152,56 +165,105 @@ export async function POST(request: NextRequest) {
             Remember: Return ONLY a valid JSON object with no additional text.
         `;
 
-    // Add timeout for model generation
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("Model generation timeout")), 15000); // 15 seconds timeout
-    });
-
     // Generate content using the prompt with timeout
     try {
-      const contentPromise = model.generateContent(prompt);
-      const result = await Promise.race([contentPromise, timeoutPromise]);
+      console.log("Sending request to Gemini API");
 
-      // @ts-expect-error - result is the content generation result if the race was won by contentPromise
-      const response = await result.response;
-      const assessmentText = response.text();
+      // Use AbortController for better timeout handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        console.log("Gemini API request timeout triggered");
+        controller.abort();
+      }, 25000); // 25 seconds timeout
 
-      if (!assessmentText || assessmentText.trim().length < 50) {
-        console.error("Empty or too short assessment returned");
-        return NextResponse.json(
-          { error: "Failed to generate a valid assessment" },
-          { status: 500 },
-        );
-      }
-
-      // Try to parse the response as JSON
       try {
-        // Extract JSON from the response (in case there's surrounding text)
-        const jsonMatch = assessmentText.match(/\{[\s\S]*\}/);
-        const jsonString = jsonMatch ? jsonMatch[0] : assessmentText;
-        const assessment = JSON.parse(jsonString);
+        const result = await model.generateContent(prompt);
+        clearTimeout(timeoutId);
 
-        // Validate that the parsed JSON has all required fields
-        if (
-          !assessment.overallAssessment ||
-          !Array.isArray(assessment.keyObservations) ||
-          !Array.isArray(assessment.selfCareSuggestions) ||
-          !Array.isArray(assessment.diagnosis)
-        ) {
-          // If missing fields, create a properly structured fallback response
-          const fallbackAssessment = {
+        console.log("Gemini API response received");
+        const assessmentText = result.response.text();
+
+        if (!assessmentText || assessmentText.trim().length < 50) {
+          console.error("Empty or too short assessment returned");
+          throw new Error("Failed to generate a valid assessment");
+        }
+
+        // Try to parse the response as JSON
+        try {
+          // Extract JSON from the response (in case there's surrounding text)
+          const jsonMatch = assessmentText.match(/\{[\s\S]*\}/);
+          const jsonString = jsonMatch ? jsonMatch[0] : assessmentText;
+          const assessment = JSON.parse(jsonString);
+
+          // Validate that the parsed JSON has all required fields
+          if (
+            !assessment.overallAssessment ||
+            !Array.isArray(assessment.keyObservations) ||
+            !Array.isArray(assessment.selfCareSuggestions) ||
+            !Array.isArray(assessment.diagnosis)
+          ) {
+            // If missing fields, create a properly structured fallback response
+            const fallbackAssessment = {
+              overallAssessment:
+                extractSection(assessmentText, "Overall Assessment") ||
+                "Based on your responses, we've identified some aspects of your mental wellbeing to consider.",
+              keyObservations: extractBulletPoints(
+                extractSection(assessmentText, "Key Observations"),
+              ) || ["Consider speaking with a mental health professional for a proper evaluation."],
+              selfCareSuggestions: extractBulletPoints(
+                extractSection(assessmentText, "Self-Care Suggestions"),
+              ) || [
+                "Practice regular self-care activities",
+                "Maintain connections with supportive people",
+                "Get adequate sleep and exercise",
+                "Consider mindfulness practices",
+                "Seek professional support if needed",
+              ],
+              diagnosis: [
+                {
+                  id: "disclaimer",
+                  name: "Important Note",
+                  description:
+                    "This is not a clinical diagnosis and should not replace professional mental health advice.",
+                },
+              ],
+            };
+
+            console.log("Successfully created fallback structured assessment");
+            return NextResponse.json(fallbackAssessment, {
+              status: 200,
+              headers: {
+                "Cache-Control": "private, no-cache, no-store, must-revalidate",
+              },
+            });
+          }
+
+          console.log("Successfully generated structured assessment");
+          return NextResponse.json(assessment, {
+            status: 200,
+            headers: {
+              "Cache-Control": "private, no-cache, no-store, must-revalidate",
+            },
+          });
+        } catch (jsonError) {
+          console.error("Error parsing JSON from model response:", jsonError);
+
+          // Create a structured response from the text-based assessment
+          const structuredAssessment = {
             overallAssessment:
               extractSection(assessmentText, "Overall Assessment") ||
-              "Based on your responses, we've identified some aspects of your mental wellbeing to consider.",
+              assessmentText.substring(0, 200),
             keyObservations: extractBulletPoints(
               extractSection(assessmentText, "Key Observations"),
-            ) || ["Consider speaking with a mental health professional for a proper evaluation."],
+            ) || [
+              "Based on your responses, we recommend speaking with a mental health professional for a proper evaluation.",
+            ],
             selfCareSuggestions: extractBulletPoints(
               extractSection(assessmentText, "Self-Care Suggestions"),
             ) || [
               "Practice regular self-care activities",
               "Maintain connections with supportive people",
-              "Get adequate sleep and exercise",
+              "Get adequate rest",
               "Consider mindfulness practices",
               "Seek professional support if needed",
             ],
@@ -215,61 +277,29 @@ export async function POST(request: NextRequest) {
             ],
           };
 
-          console.log("Successfully created fallback structured assessment");
-          return NextResponse.json(fallbackAssessment, {
+          console.log("Created structured assessment from text response");
+          return NextResponse.json(structuredAssessment, {
             status: 200,
             headers: {
               "Cache-Control": "private, no-cache, no-store, must-revalidate",
             },
           });
         }
+      } catch (genError) {
+        clearTimeout(timeoutId);
+        console.error("Error during Gemini API call:", genError);
 
-        console.log("Successfully generated structured assessment");
-        return NextResponse.json(assessment, {
-          status: 200,
-          headers: {
-            "Cache-Control": "private, no-cache, no-store, must-revalidate",
-          },
-        });
-      } catch (jsonError) {
-        console.error("Error parsing JSON from model response:", jsonError);
+        // If AbortError, provide specific message
+        if (
+          genError &&
+          typeof genError === "object" &&
+          "name" in genError &&
+          genError.name === "AbortError"
+        ) {
+          return NextResponse.json({ error: "Gemini API request timed out" }, { status: 408 });
+        }
 
-        // Create a structured response from the text-based assessment
-        const structuredAssessment = {
-          overallAssessment:
-            extractSection(assessmentText, "Overall Assessment") ||
-            assessmentText.substring(0, 200),
-          keyObservations: extractBulletPoints(
-            extractSection(assessmentText, "Key Observations"),
-          ) || [
-            "Based on your responses, we recommend speaking with a mental health professional for a proper evaluation.",
-          ],
-          selfCareSuggestions: extractBulletPoints(
-            extractSection(assessmentText, "Self-Care Suggestions"),
-          ) || [
-            "Practice regular self-care activities",
-            "Maintain connections with supportive people",
-            "Get adequate rest",
-            "Consider mindfulness practices",
-            "Seek professional support if needed",
-          ],
-          diagnosis: [
-            {
-              id: "disclaimer",
-              name: "Important Note",
-              description:
-                "This is not a clinical diagnosis and should not replace professional mental health advice.",
-            },
-          ],
-        };
-
-        console.log("Created structured assessment from text response");
-        return NextResponse.json(structuredAssessment, {
-          status: 200,
-          headers: {
-            "Cache-Control": "private, no-cache, no-store, must-revalidate",
-          },
-        });
+        throw genError;
       }
     } catch (generationError) {
       console.error("Error during content generation:", generationError);

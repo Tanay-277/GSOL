@@ -72,7 +72,7 @@ const ZoomParallax: FC<Props> = ({ classes }) => {
               className="absolute top-0 flex h-full w-full items-center justify-center"
             >
               <div className={classes}>
-                <Image src={src} fill objectFit="cover" alt="image" />
+                <Image width={450} height={250} src={src} fill objectFit="cover" alt="image" />
               </div>
             </motion.div>
           );

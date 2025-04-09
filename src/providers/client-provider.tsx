@@ -20,14 +20,36 @@ export default function ClientProvider({
 
     // Add a global error handler for fetch errors related to auth
     const handleError = (event: ErrorEvent) => {
-      if (event.message.includes("NetworkError") && event.message.includes("/api/auth/session")) {
+      // Look for NextAuth fetch errors
+      if (
+        (event.message.includes("NetworkError") || event.message.includes("fetch")) && 
+        (event.message.includes("/api/auth/session") || event.message.includes("/api/auth/_log"))
+      ) {
         console.error("NextAuth session fetch error:", event);
         setErrorCount((prev) => prev + 1);
+        
+        // Prevent the error from showing in console
+        if (event.cancelable) {
+          event.preventDefault();
+        }
       }
     };
 
+    // Listen for fetch errors
     window.addEventListener("error", handleError);
-    return () => window.removeEventListener("error", handleError);
+    window.addEventListener("unhandledrejection", (event) => {
+      if (event.reason?.message?.includes("/api/auth/") || 
+          (typeof event.reason === "string" && event.reason.includes("/api/auth/"))) {
+        console.warn("Suppressed NextAuth promise rejection:", event.reason);
+        event.preventDefault();
+        setErrorCount((prev) => prev + 1);
+      }
+    });
+    
+    return () => {
+      window.removeEventListener("error", handleError);
+      window.removeEventListener("unhandledrejection", () => {});
+    };
   }, []);
 
   // Only render the real provider after mounting to avoid hydration issues
@@ -35,8 +57,14 @@ export default function ClientProvider({
     return <>{children}</>;
   }
 
+  const refetchInterval = errorCount > 0 ? 0 : 5 * 60; // Disable auto-refetch on errors
+  
   return (
-    <SessionProvider session={session} refetchInterval={errorCount > 0 ? 0 : 5 * 60}>
+    <SessionProvider 
+      session={session} 
+      refetchInterval={refetchInterval}
+      refetchOnWindowFocus={errorCount < 3} // Stop refetching after too many errors
+    >
       {children}
     </SessionProvider>
   );

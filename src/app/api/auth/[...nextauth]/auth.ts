@@ -1,9 +1,12 @@
 import { db } from "@/db";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { AuthOptions } from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 
 export const authOptions: AuthOptions = {
+  // Use PrismaAdapter for better database integration
+  adapter: PrismaAdapter(db),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_ID as string,
@@ -14,82 +17,58 @@ export const authOptions: AuthOptions = {
       clientSecret: process.env.GITHUB_SECRET as string,
     }),
   ],
+  pages: {
+    signIn: "/signin",
+    error: "/auth-error",
+  },
   callbacks: {
-    async session({ session }) {
-      if (session.user?.email) {
-        const dbUser = await db.user.findUnique({
-          where: { email: session.user.email },
-          include: {
-            courses: true,
-          },
-        });
-
-        if (dbUser && session.user) {
-          session.user.id = dbUser.id;
-          session.user.email = dbUser.email;
+    async session({ session, token, user }) {
+      if (session?.user) {
+        if (token?.sub) {
+          session.user.id = token.sub;
+        } else if (user?.id) {
+          session.user.id = user.id;
         }
       }
-
       return session;
     },
-    async signIn({ user }) {
-      if (!user.email || !user) {
-        return false;
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
       }
-
-      try {
+      return token;
+    },
+    async signIn({ user }) {
+      // Verify the user exists in the database
+      if (user.email) {
         const dbUser = await db.user.findUnique({
           where: { email: user.email },
         });
 
+        // If user doesn't exist, create it
         if (!dbUser) {
-          await db.user.create({
-            data: {
-              email: user.email,
-              name: user.name || "Guest",
-              avatar: user.image || "",
-            },
-          });
+          try {
+            await db.user.create({
+              data: {
+                email: user.email,
+                name: user.name || "User",
+                avatar: user.image || null,
+              },
+            });
+          } catch (error) {
+            console.error("Error creating user:", error);
+            return false;
+          }
         }
-
-        return true;
-      } catch (error) {
-        console.error("Sign in error:", error);
-        return false;
       }
+      return true;
     },
   },
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  cookies: {
-    sessionToken: {
-      name: `next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
-    callbackUrl: {
-      name: `next-auth.callback-url`,
-      options: {
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
-    csrfToken: {
-      name: `next-auth.csrf-token`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
-  },
   debug: process.env.NODE_ENV === "development",
+  // Make sure we have a secret configured
+  secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
 };

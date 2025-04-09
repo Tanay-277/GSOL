@@ -1,6 +1,5 @@
 import NextAuth from "next-auth";
 import { authOptions } from "./auth";
 
-const handler = NextAuth(authOptions);
-
-export { handler as GET, handler as POST };
+// Use a direct export of the handlers instead of a variable assignment
+export const { GET, POST } = NextAuth(authOptions);

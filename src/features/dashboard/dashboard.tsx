@@ -66,7 +66,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                       cy="50%"
                       outerRadius={80}
                     >
-                      {data.coursesByType.map((entry, index) => (
+                      {data.coursesByType.map((_entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
