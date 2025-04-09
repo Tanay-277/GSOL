@@ -351,13 +351,15 @@ export default function AssessmentHistory() {
                         <span>{formatDate(assessment.date)}</span>
                       </div>
                     </div>
-                    <button
+                    <div
                       onClick={(e) => handleDeleteAssessment(assessment.date, e)}
-                      className="rounded-full p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      className="cursor-pointer rounded-full p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                       aria-label="Delete assessment"
+                      role="button"
+                      tabIndex={0}
                     >
                       <Trash2 className="h-4 w-4" />
-                    </button>
+                    </div>
                   </div>
 
                   {checkForCrisisContent(assessment) && (

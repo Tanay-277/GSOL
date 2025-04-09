@@ -28,7 +28,7 @@ import {
   Smile,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type Question = {
   id: number;
@@ -47,12 +47,12 @@ type AssessmentResult = {
   assessment: string;
 };
 
-interface ApiResponse {
-  overallAssessment: string;
-  keyObservations: string[];
-  selfCareSuggestions: string[];
-  diagnosis: { id: string; name: string; description: string }[];
-}
+// interface ApiResponse {
+//   overallAssessment: string;
+//   keyObservations: string[];
+//   selfCareSuggestions: string[];
+//   diagnosis: { id: string; name: string; description: string }[];
+// }
 
 // Mental health crisis resources
 const CRISIS_RESOURCES = [
@@ -115,6 +115,10 @@ export default function OnBoarding() {
 
   const { toggleSidebar } = useSidebar();
 
+  // Add a new ref to track if we're currently fetching
+  const isFetchingRef = useRef(false);
+  const isSubmittingRef = useRef(false);
+
   // Load only completed assessment history from localStorage on mount
   useEffect(() => {
     // Only toggle sidebar once
@@ -137,6 +141,12 @@ export default function OnBoarding() {
   }, [toggleSidebar, sidebarToggled]);
 
   const fetchQuestions = async () => {
+    // Prevent multiple simultaneous requests
+    if (isFetchingRef.current) {
+      console.log("Already fetching questions, request ignored");
+      return;
+    }
+
     // Clear any existing timeout
     setLoadingQuestions(true);
     setError("");
@@ -144,90 +154,98 @@ export default function OnBoarding() {
     setApiErrors(0);
     setRequestSuccess(false); // Reset success state
 
+    // Set fetching flag to true
+    isFetchingRef.current = true;
+
     // Add retry logic for more resilience
     let retries = 2;
 
-    while (retries >= 0 && !requestSuccess) {
-      try {
-        const response = await fetch("/api/generate-questions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ focus }),
-        });
+    try {
+      while (retries >= 0 && !requestSuccess) {
+        try {
+          const response = await fetch("/api/generate-questions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ focus }),
+            // Add cache control
+            cache: "no-store",
+          });
 
-        if (response.status === 429) {
-          setError("You've made too many requests. Please wait a moment and try again.");
-          throw new Error("Rate limit exceeded");
-        }
+          if (response.status === 429) {
+            setError("You've made too many requests. Please wait a moment and try again.");
+            throw new Error("Rate limit exceeded");
+          }
 
-        if (!response.ok) {
-          throw new Error(`Failed to generate questions: ${response.status}`);
-        }
+          if (!response.ok) {
+            throw new Error(`Failed to generate questions: ${response.status}`);
+          }
 
-        const data = await response.json();
+          const data = await response.json();
 
-        if (!data.questions || data.questions.length < 5) {
-          throw new Error("Invalid question format received");
-        }
+          if (!data.questions || data.questions.length < 5) {
+            throw new Error("Invalid question format received");
+          }
 
-        setQuestions(data.questions);
-        setRequestSuccess(true); // Set success state
+          setQuestions(data.questions);
+          setRequestSuccess(true); // Set success state
 
-        // If we're using fallback questions (indicated by source)
-        if (data.source === "fallback") {
-          console.log("Using fallback questions");
+          // If we're using fallback questions (indicated by source)
+          if (data.source === "fallback") {
+            console.log("Using fallback questions");
+            setApiErrors((prev) => prev + 1);
+          }
+          break; // Exit the while loop on success
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+          console.error("Error generating questions:", error);
+          retries--;
           setApiErrors((prev) => prev + 1);
-        }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
-        console.error("Error generating questions:", error);
-        retries--;
-        setApiErrors((prev) => prev + 1);
 
-        if (retries < 0) {
-          setError("We encountered an issue creating your assessment. Please try again later.");
-          // Use fallback questions
-          setQuestions([
-            {
-              id: 1,
-              question: "How would you rate your overall mood over the past two weeks?",
-              options: ["Very poor", "Poor", "Neutral", "Good", "Very good"],
-            },
-            {
-              id: 2,
-              question: "How often have you felt anxious or worried recently?",
-              options: ["Almost constantly", "Frequently", "Sometimes", "Rarely", "Never"],
-            },
-            {
-              id: 3,
-              question: "How would you describe your sleep quality?",
-              options: ["Very poor", "Poor", "Fair", "Good", "Very good"],
-            },
-            {
-              id: 4,
-              question: "How would you rate your energy levels?",
-              options: ["Very low", "Low", "Moderate", "High", "Very high"],
-            },
-            {
-              id: 5,
-              question: "How connected do you feel to others in your life?",
-              options: ["Not at all", "Slightly", "Moderately", "Considerably", "Very"],
-            },
-          ]);
-        } else {
-          // If we still have retries left, let the user know we're trying again
-          setRetryingQuestion(true);
-          // Wait a second before retrying to avoid overwhelming the server
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
-      } finally {
-        if (retries < 0 || requestSuccess) {
-          setLoadingQuestions(false);
-          setRetryingQuestion(false);
+          if (retries < 0) {
+            setError("We encountered an issue creating your assessment. Please try again later.");
+            // Use fallback questions
+            setQuestions([
+              {
+                id: 1,
+                question: "How would you rate your overall mood over the past two weeks?",
+                options: ["Very poor", "Poor", "Neutral", "Good", "Very good"],
+              },
+              {
+                id: 2,
+                question: "How often have you felt anxious or worried recently?",
+                options: ["Almost constantly", "Frequently", "Sometimes", "Rarely", "Never"],
+              },
+              {
+                id: 3,
+                question: "How would you describe your sleep quality?",
+                options: ["Very poor", "Poor", "Fair", "Good", "Very good"],
+              },
+              {
+                id: 4,
+                question: "How would you rate your energy levels?",
+                options: ["Very low", "Low", "Moderate", "High", "Very high"],
+              },
+              {
+                id: 5,
+                question: "How connected do you feel to others in your life?",
+                options: ["Not at all", "Slightly", "Moderately", "Considerably", "Very"],
+              },
+            ]);
+          } else {
+            // If we still have retries left, let the user know we're trying again
+            setRetryingQuestion(true);
+            // Wait a second before retrying to avoid overwhelming the server
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
         }
       }
+    } finally {
+      setLoadingQuestions(false);
+      setRetryingQuestion(false);
+      // Reset fetching flag
+      isFetchingRef.current = false;
     }
   };
 
@@ -259,13 +277,31 @@ export default function OnBoarding() {
     }
   };
 
-  // New function to handle final submission after confirmation
+  // Modify the start assessment function to prevent duplicate calls
+  const startAssessment = () => {
+    if (!dataPrivacyAcknowledged || isFetchingRef.current) {
+      return;
+    }
+
+    setStarted(true);
+    fetchQuestions();
+  };
+
   const handleSubmitAssessment = async () => {
     try {
+      // Prevent duplicate submissions
+      if (loading || isSubmittingRef.current) {
+        console.log("Submission already in progress, ignoring duplicate request");
+        return;
+      }
+
+      isSubmittingRef.current = true;
       setShowConfirmation(false);
       setLoading(true);
-      setShowResults(true); // Immediately show the results page with loading state
-      setRequestSuccess(false); // Reset success state
+      setShowResults(true);
+      setRequestSuccess(false);
+
+      console.log("Starting assessment submission process");
 
       // Add the last response that was stored when showing confirmation
       const finalResponses = [
@@ -278,7 +314,7 @@ export default function OnBoarding() {
 
       setUserResponses(finalResponses);
 
-      // Crisis word detection - check for concerning responses that might indicate immediate risk
+      // Crisis word detection
       const crisisKeywords = [
         "suicide",
         "kill myself",
@@ -297,183 +333,169 @@ export default function OnBoarding() {
         setShowCrisisResources(true);
       }
 
+      // Set a global timeout for the entire operation
+      const analysisTimeout = setTimeout(() => {
+        console.log("Analysis request timed out");
+        setLoading(false);
+        setError("Analysis request timed out. Using generic assessment.");
+        setAssessment(FALLBACK_ASSESSMENT);
+        setProcessedAssessment(processAssessment(FALLBACK_ASSESSMENT));
+        isSubmittingRef.current = false;
+      }, 40000); // Extended to 40 seconds due to multiple API calls
+
       try {
-        // Add retry logic for more resilience
-        let retries = 2;
+        console.log("Sending analysis request");
 
-        // Set a timeout for the entire operation
-        const analysisTimeout = setTimeout(() => {
-          setLoading(false);
-          setError("Analysis request timed out. Using generic assessment.");
-          setAssessment(FALLBACK_ASSESSMENT);
-          setProcessedAssessment(processAssessment(FALLBACK_ASSESSMENT));
-        }, 30000); // 30 seconds global timeout
+        // Use AbortController for reliable timeout
+        const controller = new AbortController();
+        const fetchTimeoutId = setTimeout(() => {
+          console.log("Analysis fetch timeout triggered");
+          controller.abort();
+        }, 20000); // Extended to 20 seconds
 
-        while (retries >= 0 && !requestSuccess) {
-          try {
-            // Send all responses for analysis
-            console.log("Sending responses for analysis");
-            const controller = new AbortController();
-            const fetchTimeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds timeout for fetch
+        // Send all responses for analysis with explicit no-cache
+        const response = await fetch("/api/analyse-responses", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+          },
+          body: JSON.stringify({ responses: finalResponses }),
+          signal: controller.signal,
+          cache: "no-store",
+        });
 
-            const response = await fetch("/api/analyse-responses", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ responses: finalResponses }),
-              signal: controller.signal,
-            });
+        clearTimeout(fetchTimeoutId);
 
-            clearTimeout(fetchTimeoutId);
-
-            if (response.status === 429) {
-              setError("You've made too many requests. Please wait a moment and try again.");
-              throw new Error("Rate limit exceeded");
-            }
-
-            if (!response.ok) {
-              const errorData = await response.json().catch(() => ({}));
-              console.error("Error response:", response.status, errorData);
-              throw new Error(
-                `Server error: ${response.status} - ${errorData.error || "Unknown error"}`,
-              );
-            }
-
-            const data = (await response.json()) as ApiResponse;
-
-            if (
-              !data.overallAssessment ||
-              !data.keyObservations ||
-              !data.selfCareSuggestions ||
-              !data.diagnosis
-            ) {
-              console.error("Missing key fields in response:", data);
-              throw new Error("Response did not contain expected fields");
-            }
-            setProcessedAssessment({
-              overall: data.overallAssessment,
-              observations: data.keyObservations.join("\n"),
-              recommendations: "", // Add empty recommendations
-              selfCare: data.selfCareSuggestions,
-              disclaimer:
-                "This assessment is not a clinical diagnosis and should not replace professional mental health advice.",
-              diagnosis: data.diagnosis
-                .map((d) => `${d.id} - ${d.name}: ${d.description}`)
-                .join("\n"),
-            });
-
-            // Only store the completed assessment to history in localStorage
-            const newAssessment: AssessmentResult = {
-              date: new Date().toISOString(),
-              responses: finalResponses,
-              assessment: JSON.stringify(data),
-            };
-
-            try {
-              const updatedHistory = [...assessmentHistory, newAssessment];
-              setAssessmentHistory(updatedHistory);
-              localStorage.setItem("mentalHealthAssessments", JSON.stringify(updatedHistory));
-            } catch (storageError) {
-              console.error("Error saving assessment history:", storageError);
-              // If localStorage fails, we still have the assessment in memory to display
-            }
-
-            // Generate courses based on the assessment
-            try {
-              console.log("Generating courses based on assessment");
-              const courseController = new AbortController();
-              const courseTimeoutId = setTimeout(() => courseController.abort(), 15000);
-
-              const courseResponse = await fetch("/api/generate-course", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  responses: finalResponses,
-                  assessment: data,
-                }),
-                signal: courseController.signal,
-              });
-
-              clearTimeout(courseTimeoutId);
-
-              if (!courseResponse.ok) {
-                console.error("Error generating courses:", courseResponse.status);
-                // Show error message but continue with assessment results
-                setError(
-                  "We couldn't generate personalized courses at this time. You can still view your assessment results.",
-                );
-              } else {
-                const courseData = await courseResponse.json();
-                console.log("Courses generated successfully:", courseData);
-
-                // Store the generated courses in localStorage for the dashboard
-                try {
-                  localStorage.setItem("generatedCourses", JSON.stringify(courseData.courses));
-                } catch (storageError) {
-                  console.error("Error saving courses to localStorage:", storageError);
-                }
-
-                // Show success message and redirect to dashboard
-                setError("");
-                console.log("Ready to access courses");
-              }
-            } catch (courseError) {
-              console.error("Error generating courses:", courseError);
-              setError(
-                "We couldn't generate personalized courses at this time. You can still view your assessment results.",
-              );
-            }
-
-            setRequestSuccess(true); // Set success state
-            clearTimeout(analysisTimeout);
-            break;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          } catch (error: any) {
-            console.error("Error analyzing responses:", error);
-            retries--;
-            setApiErrors((prev) => prev + 1);
-
-            if (retries < 0) {
-              setError(
-                error instanceof Error
-                  ? error.message
-                  : "We couldn't generate your assessment. Please try again later.",
-              );
-              setAssessment(
-                "We couldn't generate a personalized assessment at this time. Please try again later or consult with a mental health professional for an accurate evaluation.",
-              );
-              setProcessedAssessment(
-                processAssessment(
-                  "We couldn't generate a personalized assessment at this time. Please try again later or consult with a mental health professional for an accurate evaluation.",
-                ),
-              );
-            } else {
-              // Wait a second before retrying
-              await new Promise((resolve) => setTimeout(resolve, 1000));
-            }
-          }
+        if (response.status === 429) {
+          console.error("Rate limit exceeded");
+          setError("You've made too many requests. Please wait a moment and try again.");
+          throw new Error("Rate limit exceeded");
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error("Error response:", response.status, errorData);
+          throw new Error(
+            `Server error: ${response.status} - ${errorData.error || "Unknown error"}`,
+          );
+        }
+
+        console.log("Analysis response received");
+        const data = await response.json();
+
+        if (
+          !data.overallAssessment ||
+          !data.keyObservations ||
+          !data.selfCareSuggestions ||
+          !data.diagnosis
+        ) {
+          console.error("Missing key fields in response:", data);
+          throw new Error("Response did not contain expected fields");
+        }
+
+        // Set the processed assessment with the response data
+        setProcessedAssessment({
+          overall: data.overallAssessment,
+          observations: data.keyObservations.join("\n"),
+          recommendations: "", // Add empty recommendations
+          selfCare: data.selfCareSuggestions,
+          disclaimer:
+            "This assessment is not a clinical diagnosis and should not replace professional mental health advice.",
+          diagnosis: data.diagnosis,
+        });
+
+        // Store the completed assessment in history
+        const newAssessment = {
+          date: new Date().toISOString(),
+          responses: finalResponses,
+          assessment: JSON.stringify(data),
+        };
+
+        try {
+          const updatedHistory = [...assessmentHistory, newAssessment];
+          setAssessmentHistory(updatedHistory);
+          localStorage.setItem("mentalHealthAssessments", JSON.stringify(updatedHistory));
+        } catch (storageError) {
+          console.error("Error saving assessment history:", storageError);
+        }
+
+        // Generate courses based on the assessment
+        console.log("Generating courses based on assessment");
+        try {
+          const courseController = new AbortController();
+          const courseTimeoutId = setTimeout(() => {
+            console.log("Course generation timeout triggered");
+            courseController.abort();
+          }, 30000); // Extended to 30 seconds for course generation
+
+          const courseResponse = await fetch("/api/generate-course", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+              Pragma: "no-cache",
+            },
+            body: JSON.stringify({
+              responses: finalResponses,
+              assessment: data,
+            }),
+            signal: courseController.signal,
+            cache: "no-store",
+          });
+
+          clearTimeout(courseTimeoutId);
+
+          if (!courseResponse.ok) {
+            console.error("Error generating courses:", courseResponse.status);
+            setError(
+              "We couldn't generate personalized courses at this time. You can still view your assessment results.",
+            );
+          } else {
+            const courseData = await courseResponse.json();
+            console.log("Courses generated successfully:", courseData);
+
+            // If courses were generated
+            if (courseData.courses && courseData.courses.length > 0) {
+              // Store the generated courses in localStorage for the dashboard
+              localStorage.setItem("generatedCourses", JSON.stringify(courseData.courses));
+
+              // Store the first course ID for direct navigation
+              localStorage.setItem("lastGeneratedCourseId", courseData.courses[0].id);
+            }
+
+            setError("");
+            console.log("Ready to access courses");
+          }
+        } catch (courseError) {
+          console.error("Error generating courses:", courseError);
+          setError(
+            "We couldn't generate personalized courses at this time. You can still view your assessment results.",
+          );
+        }
+
+        setRequestSuccess(true); // Set success state
+        clearTimeout(analysisTimeout);
+      } catch (error) {
         console.error("Error analyzing responses:", error);
-        setError(error?.message || "We couldn't generate your assessment. Please try again later.");
-        setAssessment(
-          "We couldn't generate a personalized assessment at this time. Please try again later or consult with a mental health professional for an accurate evaluation.",
+        setError(
+          error instanceof Error
+            ? error.message
+            : "We couldn't generate your assessment. Please try again later.",
         );
-        setProcessedAssessment(
-          processAssessment(
-            "We couldn't generate a personalized assessment at this time. Please try again later or consult with a mental health professional for an accurate evaluation.",
-          ),
-        );
+        setAssessment(FALLBACK_ASSESSMENT);
+        setProcessedAssessment(processAssessment(FALLBACK_ASSESSMENT));
       } finally {
         setLoading(false);
+        isSubmittingRef.current = false;
+        clearTimeout(analysisTimeout);
       }
     } catch (e) {
       console.error("Error in handleSubmitAssessment:", e);
       setError("An unexpected error occurred. Please try again.");
+      isSubmittingRef.current = false;
+      setLoading(false);
     }
   };
 
@@ -493,16 +515,6 @@ export default function OnBoarding() {
     router.push("/history");
   };
 
-  const startAssessment = () => {
-    if (!dataPrivacyAcknowledged) {
-      return;
-    }
-
-    setStarted(true);
-    fetchQuestions();
-  };
-
-  // Create a const for the fallback assessment to avoid undefined references
   const FALLBACK_ASSESSMENT = `
     Overall Assessment:
     Based on your responses, you appear to be experiencing some mental health challenges that may benefit from attention and self-care strategies.
@@ -523,10 +535,8 @@ export default function OnBoarding() {
     NOTE: This assessment is generated automatically and is not a substitute for professional mental health advice, diagnosis, or treatment. If you're experiencing severe distress or thoughts of self-harm, please contact a crisis helpline or emergency services immediately.
     `;
 
-  // Process the assessment text into structured sections
   const processAssessment = (text: string) => {
     try {
-      // Define sections
       const sections = {
         overall: "",
         observations: "",
@@ -536,13 +546,11 @@ export default function OnBoarding() {
         diagnosis: [] as { id: string; name: string; description: string }[],
       };
 
-      // Extract overall assessment
       const overallMatch = text.match(/Overall Assessment[:\s]+([\s\S]+?)(?:Key Observations|$)/i);
       if (overallMatch && overallMatch[1]) {
         sections.overall = overallMatch[1].trim();
       }
 
-      // Extract key observations
       const observationsMatch = text.match(
         /Key Observations[:\s]+([\s\S]+?)(?:Personalized Recommendations|$)/i,
       );
@@ -550,7 +558,6 @@ export default function OnBoarding() {
         sections.observations = observationsMatch[1].trim();
       }
 
-      // Extract personalized recommendations
       const recommendationsMatch = text.match(
         /Personalized Recommendations[:\s]+([\s\S]+?)(?:Self-Care Suggestions|$)/i,
       );
@@ -558,10 +565,8 @@ export default function OnBoarding() {
         sections.recommendations = recommendationsMatch[1].trim();
       }
 
-      // Extract self-care suggestions
       const selfCareMatch = text.match(/Self-Care Suggestions[:\s]+([\s\S]+?)(?:NOTE:|$)/i);
       if (selfCareMatch && selfCareMatch[1]) {
-        // Extract bullet points
         const bulletPoints = selfCareMatch[1]
           .split(/[\n\r]+/)
           .map((item) => item.replace(/^[-•*]\s*/, "").trim())
@@ -570,7 +575,6 @@ export default function OnBoarding() {
         sections.selfCare = bulletPoints;
       }
 
-      // Extract disclaimer
       const disclaimerMatch =
         text.match(/NOTE:[:\s]+([\s\S]+)$/i) ||
         text.match(/IMPORTANT:[:\s]+([\s\S]+)$/i) ||
@@ -578,7 +582,6 @@ export default function OnBoarding() {
       if (disclaimerMatch && disclaimerMatch[1]) {
         sections.disclaimer = disclaimerMatch[1].trim();
       } else {
-        // Default disclaimer if not found
         sections.disclaimer =
           "This assessment is not a clinical diagnosis and should not replace professional mental health advice.";
       }
@@ -586,7 +589,6 @@ export default function OnBoarding() {
       return sections;
     } catch (error) {
       console.error("Error processing assessment text:", error);
-      // If parsing fails, return the original text in the overall section
       return {
         overall: text,
         observations: "",
@@ -599,12 +601,34 @@ export default function OnBoarding() {
     }
   };
 
-  // Add this to process the fallback assessment too
   useEffect(() => {
     if (FALLBACK_ASSESSMENT && !processedAssessment) {
       setProcessedAssessment(processAssessment(FALLBACK_ASSESSMENT));
     }
-  }, [FALLBACK_ASSESSMENT]);
+  }, [FALLBACK_ASSESSMENT, processedAssessment]);
+
+  const navigateToCourse = useCallback(() => {
+    const lastCourseId = localStorage.getItem("lastGeneratedCourseId");
+
+    if (lastCourseId) {
+      console.log("Navigating to last generated course:", lastCourseId);
+      router.push(`/course/${lastCourseId}`);
+      return;
+    }
+
+    const courses = localStorage.getItem("generatedCourses");
+    if (courses) {
+      const parsedCourses = JSON.parse(courses);
+      if (parsedCourses && parsedCourses.length > 0) {
+        console.log("Navigating to first course from storage:", parsedCourses[0].id);
+        router.push(`/course/${parsedCourses[0].id}`);
+      } else {
+        router.push("/dashboard");
+      }
+    } else {
+      router.push("/dashboard");
+    }
+  }, [router]);
 
   if (loadingQuestions && !questions.length) {
     return (
@@ -854,14 +878,14 @@ export default function OnBoarding() {
                   {processedAssessment.diagnosis && (
                     <Collapsible className="rounded-xl border border-muted bg-card shadow-sm">
                       <div className="p-5">
-                        <CollapsibleTrigger className="flex w-full items-center justify-between">
+                        <CollapsibleTrigger className="group flex w-full items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/30">
                               <Info className="h-5 w-5 text-violet-500" />
                             </div>
                             <h3 className="text-xl font-medium">Potential Conditions</h3>
                           </div>
-                          <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 [&[data-state=open]>svg]:rotate-180" />
+                          <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
                         </CollapsibleTrigger>
                       </div>
                       <CollapsibleContent className="px-5 pb-5">
@@ -967,25 +991,11 @@ export default function OnBoarding() {
                       path to help you improve your mental wellbeing.
                     </p>
                     <Button
-                      onClick={() => {
-                        // Get courses from localStorage
-                        const courses = localStorage.getItem("generatedCourses");
-                        if (courses) {
-                          const parsedCourses = JSON.parse(courses);
-                          if (parsedCourses && parsedCourses.length > 0) {
-                            // Navigate directly to the first course
-                            router.push(`/course/${parsedCourses[0].id}`);
-                          } else {
-                            router.push("/course");
-                          }
-                        } else {
-                          router.push("/course");
-                        }
-                      }}
+                      onClick={navigateToCourse}
                       className="bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:text-white dark:hover:bg-green-800"
                       size="lg"
                     >
-                      Start My Course
+                      View My Courses
                     </Button>
                   </div>
                 </div>

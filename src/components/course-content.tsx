@@ -87,6 +87,8 @@ export function CourseContent({ course, videos }: CourseContentProps) {
                     <Card key={video.id} className="overflow-hidden">
                       <div className="relative">
                         <Image
+                          height={250}
+                          width={400}
                           src={
                             video.thumbnail || `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`
                           }

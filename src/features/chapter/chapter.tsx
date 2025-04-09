@@ -61,6 +61,8 @@ export const Chapter = ({ data, chapter }: Props) => {
                 <Card key={video.id} className="overflow-hidden">
                   <div className="relative">
                     <Image
+                      width={450}
+                      height={250}
                       src={video.thumbnail}
                       alt={video.title}
                       className="h-48 w-full object-cover"
